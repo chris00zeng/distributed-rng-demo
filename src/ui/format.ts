@@ -62,6 +62,8 @@ export function msgLabel(msg: Msg): string {
     case 'announce': return `announces ${shortScalar(msg.value)}`;
     case 'commit': return 'commits (hash)';
     case 'reveal': return `reveals ${shortScalar(msg.value)}`;
+    case 'share': return 'share';
+    case 'reconstructShare': return `share of ${name(msg.dealer)}'s number`;
     default: {
       const m = msg as { kind: string };
       return m.kind;
@@ -82,6 +84,7 @@ export function describeEvent(e: Event, broadcast = false): string {
     case 'abort': return e.restart ? `${name(e.by)} quits. The round restarts.` : `${name(e.by)} quits. The others carry on without him.`;
     case 'outcome': return `Rooms assigned: ${PARTY_IDS.map((p) => `${name(p)} gets ${roomLabel(e.assignment[p])}`).join(', ')}.`;
     case 'stuck': return `Stuck: ${e.reason}.`;
+    case 'void': return `${name(e.by)} calls the round void: ${e.reason}. Everyone starts over.`;
     case 'decision': {
       const opt = e.point.options.find((o) => o.id === e.chosen);
       const what = opt?.label ?? e.chosen;

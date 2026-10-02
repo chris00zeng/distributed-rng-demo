@@ -60,6 +60,7 @@ export function buildRows(events: Event[]): Row[] {
       case 'drop': silent = [...silent, e.party]; label = `${name(e.party)} is silent`; tone = 'drop'; break;
       case 'outcome': label = `rooms: ${PARTY_IDS.map((p) => `${name(p)} ${roomLabel(e.assignment[p]).toLowerCase()}`).join(', ')}`; tone = 'outcome'; break;
       case 'stuck': label = `stuck: ${e.reason}`; tone = 'stuck'; break;
+      case 'void': label = `${name(e.by)}: ${e.reason} — start over`; tone = 'abort'; break;
       default: {
         const prev = rows.at(-1);
         if (prev) prev.last = i;

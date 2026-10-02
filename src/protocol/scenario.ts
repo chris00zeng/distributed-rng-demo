@@ -19,8 +19,13 @@ export const RUNG_PROTOCOLS: Record<Rung, ProtocolConfig> = {
 export const ALL_HONEST: Record<PartyId, Role> = { 0: 'honest', 1: 'honest', 2: 'honest', 3: 'honest' };
 
 /** The ladder never builds a Scenario by hand: it sets Dave's role on a rung's preset (D19). */
+/** The fake-share attack needs someone's phone to die; the ladder uses Ana's. */
+export const FAKE_SHARE_VICTIM: PartyId = 1;
+
 export function rungScenario(rung: Rung, daveRole: Role, seed = DEFAULT_SEED, t?: number): Scenario {
   let protocol = RUNG_PROTOCOLS[rung];
   if (protocol.kind === 'shared' && t !== undefined) protocol = { ...protocol, t };
-  return { protocol, roles: { ...ALL_HONEST, [DAVE]: daveRole }, seed };
+  const scenario: Scenario = { protocol, roles: { ...ALL_HONEST, [DAVE]: daveRole }, seed };
+  if (daveRole === 'fakeShare') scenario.dropout = FAKE_SHARE_VICTIM;
+  return scenario;
 }

@@ -60,3 +60,21 @@ describe('Shamir over Z_ℓ', () => {
     expect(() => reconstruct([{ x: 1, y: 1n }, { x: 1, y: 2n }])).toThrow(RangeError);
   });
 });
+
+describe('consistency check (D25)', () => {
+  it('honest shares are consistent; one tampered share is not; t shares are always consistent', async () => {
+    const { isConsistent, deal, interpolate, evalPolynomial } = await import('./shamir');
+    const { makePrng } = await import('./prng');
+    const rng = makePrng('consistency');
+    for (const t of [2, 3]) {
+      const shares = deal(17n, t, 4, rng);
+      expect(isConsistent(shares, t)).toBe(true);
+      const bad = shares.map((s, i) => (i === 2 ? { ...s, y: s.y + 1n } : s));
+      expect(isConsistent(bad, t)).toBe(false);
+      expect(isConsistent(bad.slice(0, t), t)).toBe(true);
+      const coeffs = interpolate(shares.slice(0, t));
+      expect(coeffs[0]).toBe(17n);
+      for (const s of shares) expect(evalPolynomial(coeffs, s.x)).toBe(s.y);
+    }
+  });
+});

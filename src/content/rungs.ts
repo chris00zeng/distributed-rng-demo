@@ -19,8 +19,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   liar: 'lies about the roll',
   lastMover: 'speaks last',
   aborter: 'quits when he loses',
-  badDealer: 'deals inconsistent shares',
-  fakeShare: 'submits a fake share',
+  badDealer: 'deals shares that do not add up',
+  fakeShare: 'forges a share when Ana\'s phone dies',
   colluder: 'colludes with Ben',
 };
 
@@ -65,7 +65,16 @@ export const RUNGS: readonly RungCopy[] = [
     attackRole: 'aborter',
     available: true,
   },
-  { id: 4, title: 'One bad dealer', protocol: '', attack: '', outcome: '', lesson: '', attackRole: 'badDealer', available: false },
+  {
+    id: 4,
+    title: 'One bad dealer',
+    protocol: 'Same as rung 3. The roommates now check that the shares they collect agree with each other.',
+    attack: 'Dave deals shares that do not add up, or hands in a forged share when Ana\'s phone dies. The others can see the shares disagree, but not whose share is the lie. All they can do is call the round void and start over.',
+    outcome: 'Broken by one cheater. "Start over" is exactly what the quitter wanted. Dave: 100%, the rung 2 chart again.',
+    lesson: 'Secret sharing assumes an honest dealer. Detecting a lie is not enough; you have to be able to say who told it.',
+    attackRole: 'badDealer',
+    available: true,
+  },
   { id: 5, title: 'Verifiable secret sharing', protocol: '', attack: '', outcome: '', lesson: '', attackRole: 'badDealer', available: false },
   { id: 6, title: 'The threshold limit', protocol: '', attack: '', outcome: '', lesson: '', attackRole: 'colluder', available: false },
 ];

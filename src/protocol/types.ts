@@ -116,6 +116,8 @@ export interface Ctx {
   abort(): void;
   /** Stop participating by accident (dead phone). Same mechanics as abort, different label. */
   dropout(): void;
+  /** Declare the round void (e.g. shares that do not add up). The round restarts for everyone. */
+  void(reason: string): void;
 }
 
 export interface Party {
@@ -140,6 +142,8 @@ export type Event =
   | { kind: 'drop'; party: PartyId }
   | { kind: 'phase'; phase: Phase }
   | { kind: 'abort'; by: PartyId; restart: boolean; cause: 'abort' | 'dropout' }
+  /** An honest party found the round unrecoverable and called it void: restart. */
+  | { kind: 'void'; by: PartyId; reason: string }
   /** A party chose at a decision point. `index` is its ordinal within the round, for overrides. */
   | { kind: 'decision'; by: PartyId; index: number; point: DecisionPoint; chosen: string; deviates: boolean }
   | { kind: 'outcome'; assignment: Record<PartyId, Room> }

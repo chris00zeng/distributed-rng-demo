@@ -29,7 +29,7 @@ export function useRound(scenario: Scenario) {
     setStepRaw((s) => {
       for (let i = s + 1; i <= last; i++) {
         const e = log.events[i]!;
-        if (e.kind === 'phase' || e.kind === 'abort' || e.kind === 'outcome' || e.kind === 'stuck' || e.kind === 'start') return i;
+        if (e.kind === 'phase' || e.kind === 'abort' || e.kind === 'void' || e.kind === 'outcome' || e.kind === 'stuck' || e.kind === 'start') return i;
       }
       return last;
     });
