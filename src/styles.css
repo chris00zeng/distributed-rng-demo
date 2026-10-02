@@ -557,3 +557,36 @@ button.rung:disabled {
 .decision__opt:disabled:not(.is-taken) { opacity: 0.5; cursor: default; }
 .decision__hint { margin: 0.45rem 0 0; font-size: 0.8rem; color: var(--muted); }
 .overrides { margin: 0 0 0.6rem; font-size: 0.9rem; color: var(--accent); display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+/* ---------- PR9: polynomial visual and the math toggle ---------- */
+
+/* Math toggle. With the math off, the panels hide the raw hex rows (see data-fact hooks below). */
+.math-toggle { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; color: var(--muted); cursor: pointer; align-self: center; }
+.math-toggle input { accent-color: var(--accent); }
+/* With the math off, the raw hex rows (nonce, commitments) stay out of the way. */
+.math-off .fact[data-fact="my-nonce"],
+.math-off .fact[data-fact="commitments-seen"] { display: none; }
+
+/* Polynomial visual */
+.poly { margin: 0 0 1.5rem; }
+.poly__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.poly__dealers { display: inline-flex; gap: 0.25rem; }
+.poly__dealers button { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.6rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent); background: transparent; color: var(--fg); cursor: pointer; }
+.poly__dealers button.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.poly__svg { width: 100%; max-width: 720px; height: auto; display: block; background: var(--rung-bg); border-radius: 10px; }
+.poly__axis { stroke: color-mix(in srgb, var(--muted) 70%, transparent); stroke-width: 1.5; }
+.poly__tick { fill: var(--muted); font-size: 11px; }
+.poly__tick--who { fill: var(--fg); font-weight: 600; }
+.poly__line { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; }
+.poly__line--public { stroke-dasharray: none; }
+.poly__secret { fill: var(--bg); stroke: var(--accent); stroke-width: 2.5; }
+.poly__secret--public { fill: var(--accent); }
+.poly__secret-label { fill: var(--fg); font-size: 11px; font-weight: 600; }
+.poly__pt circle { fill: var(--fg); stroke: var(--bg); stroke-width: 2; }
+.poly__pt-initial { fill: var(--bg); font-size: 10px; font-weight: 800; }
+.poly__pt--bad circle { fill: var(--accent); }
+.poly__pt--rejected circle { opacity: 0.5; }
+.poly__x { fill: var(--accent); font-size: 16px; font-weight: 800; }
+.poly__value { fill: var(--fg); font-size: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.poly__empty { fill: var(--muted); font-size: 13px; font-style: italic; }
+.poly__caption { margin-top: 0.5rem; color: var(--muted); font-size: 0.9rem; max-width: 72ch; }
+.poly__metaphor { font-style: italic; }
