@@ -78,12 +78,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** All tests green; no protocol code yet.
 - **Estimate:** 25 min · **Actual:** 10 min
 
-### PR3 — Engine, rungs 0 to 2, simulation and chart (validation gate)  `[ ]`
+### PR3 — Engine, rungs 0 to 2, simulation and chart (validation gate)  `[x]`
 - **Goal:** The thin end-to-end slice: real protocols, Dave cheating, measured bias on screen.
 - **Covers:** R1, R5, R9, R10, R14 (copy for rungs 0 to 2), R15 · D9, D10 (presets), D12, D13, D18, D19
 - **Scope:** `protocol/bus` (seeded order, `drop`), `protocol/party`, `protocol/driver` (restart on abort, 64-attempt cap, `RoundLog` + `RoundResult`), protocols `trusted`, `announce`, `commitReveal`; strategies `liar`, `lastMover`, `aborter`; `Scenario` with `ProtocolConfig` and per-party roles plus `RUNG_PRESETS` and `rolesFor`; `sim/simulate` chunked with progressive tally; `content/rungs` for 0 to 2; UI: rung nav, Dave role dropdown, "Run 1,000 rounds" button, SVG bar chart with the 1/4 line, named rooms. No panels or timeline yet. Tests: rung 0 liar 100%, rung 1 lastMover 100%, rung 2 aborter 100% with mean attempts ≈ 4, honest ≈ 25% on all three, determinism (same seed → deep-equal log).
 - **Verify:** Deployed; the author runs rung 2 and decides whether the chart earns the rest of the build. Record the decision in this doc's changelog.
-- **Estimate:** 45 min · **Actual:** —
+- **Estimate:** 45 min · **Actual:** 35 min. Gate result: Dave 100% on rung 2 at 4.0 tries per round, chart streams in; author to confirm it reads as compelling. 1,000 rounds of the slowest rung-0-to-2 case take ~0.2 s in Node after removing a deep-clone from the driver's hot loop.
 
 ### PR4 — Roommate panels, message timeline, step-through  `[ ]`
 - **Goal:** Make the information asymmetry visible: who knows what, message by message.
@@ -189,7 +189,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 |---|---:|---:|---|
 | PR1 | 20 min | 25 min | Node installed via Homebrew; repo made public for Pages |
 | PR2 | 25 min | 10 min | 29 tests; noble-hashes v2 has no `equalBytes`, wrote one |
-| PR3 | 45 min | — | Validation gate decision: — |
+| PR3 | 45 min | 35 min | Validation gate: chart compelling (Dave 100%, 4.0 tries/round); perf fix: no `view()` clones in the hot loop |
 | PR4 | 45 min | — | |
 | PR5 | 40 min | — | |
 | PR6 | 30 min | — | |
@@ -219,6 +219,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
+- 2026-10-02: PR3 done. Added `onIdle` to the Party interface (a party acts when the bus is empty: how two last movers resolve, and how rung 3 will detect dropouts) and cheap `phase()`/`assignment()` accessors beside `view()`. Both are Technical Plan interface additions; recorded there too.
 - 2026-10-02: PR2 done. Added `sampleNonZeroScalar` and `deriveSeed` to the crypto core (needed by PR3/PR5) beyond the listed scope.
 - 2026-10-02: PR1 done. Repo made public because GitHub Pages on the free plan needs it (the brief requires a shareable repo link anyway).
 - 2026-10-02: Added "Dependencies and parallel work": per-PR prerequisites, four lanes after the gate, critical path (user request).
