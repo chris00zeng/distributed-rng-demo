@@ -24,8 +24,8 @@ Every PR leaves `main` deployable and green. Each PR records actual time so the 
 | Milestone | PRs | Exit criteria | Budget (cumulative) |
 |---|---|---|---|
 | **M1 Validation gate** | PR1 to PR3 | Deployed page shows rungs 0 to 2 with a 1,000-round chart. Rung 2 aborter at 100%. The author judges the chart compelling enough to continue. | 1.5 h |
-| **M2 P0 complete** | PR4 to PR6 | Panels, timeline, role picker, rung 3 with dropout recovery and the core insight on screen. All P0 statistical tests green. Rationale drafted. | 3.9 h (incl. 0.5 h rationale draft) |
-| **M3 P1 complete** | PR7 to PR11 | Rungs 4 to 6 explainer, polynomial visual, math toggle, shareable URLs. | 6.5 h |
+| **M2 P0 complete** | PR4 to PR6, PR11, PR15, PR16 | Panels, timeline, role picker, rung 3 with dropout recovery and the core insight on screen; intro story, floorplan, arrangements grid, one view at a time, Dave's decisions overridable. All P0 statistical tests green. Rationale drafted. | 5.9 h (incl. 0.5 h rationale draft) |
+| **M3 P1 complete** | PR7 to PR10 | Rungs 4 to 6 explainer, polynomial visual, math toggle. | 8.5 h |
 | **M4 P2 complete** | PR12 to PR13 | Sandbox with per-roommate roles and pinned comparisons. | 8.0 h |
 | **Submit** | PR14 + video | Rationale final, video recorded, transcripts exported, email sent. | +0.5 h video (see budget check) |
 
@@ -46,6 +46,9 @@ Each PR lists only its direct prerequisites. Anything not listed can proceed alo
 | PR9 polynomial visual + math toggle | PR4, PR5 | PR7, PR8, PR10, PR11. The rung 4 "two intercepts" and rung 5 "✗" marks land when PR7 and PR8 are in; the base visual does not wait. |
 | PR10 rung 6 explainer | PR8 (verified `shared` with a *t* parameter); the phase chart itself needs only PR3 | PR7, PR9, PR11 |
 | PR11 shareable URLs | PR3 | Everything from PR4 onward |
+| PR15 explainer polish (arrangements, story, floorplan, one view) | PR4, PR5, PR11 | — (touches engine combination and most of the UI; run alone) |
+| PR16 Dave's decision points | PR15 | PR9 (polynomial visual touches different UI) |
+| PR7, PR8 | now also PR16 (strategies become policies) | as before |
 | PR12 Sandbox | PR4, PR8 | PR9, PR10 if still open; PR11 should land first so roles serialise |
 | PR13 pin and compare | PR12 | PR14 drafting |
 | PR14 final rationale | All merged PRs | — (the video follows it) |
@@ -99,6 +102,20 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; step through rung 3 with Dave aborting: his message is missing, three reconstruction messages follow, the round completes, and the 1,000-round chart is flat at 25%.
 - **Estimate:** 40 min · **Actual:** 10 min (engine only; the step-through check waits on PR4's timeline)
 
+### PR15 — Explainer polish: arrangements, story, floorplan, one view at a time  `[ ]`
+- **Goal:** Make the mechanism legible: add the picks, wrap at 24, look up the arrangement.
+- **Covers:** R9, R10, R24, R25, R26 · D21, D22
+- **Scope:** `crypto/arrangements` (24 permutations, winning sets) replaces `crypto/shuffle`; picks `0..23` on rungs 0 to 4 and integer-sum-mod-24 combination in the protocols; steering by direct computation; `content/rooms` with the new names, descriptions and colours; `ui/Floorplan` (one house, colour-coded, to scale) and `ui/ArrangementGrid` (24 mini floorplans with initials; highlight one or shade by frequency); intro story section (collapsible); segmented control switching the step view and the simulation view; panels and timeline show picks as small numbers. Tests: arrangement table is a permutation set of size 24 with 6 wins per party; sum-mod-24 uniformity; all existing statistical tests still pass with the new combination; steering always lands in the winning set.
+- **Verify:** Deployed; a first-time visitor reads the intro, sees the house, picks rung 2, steps a round and sees arrangement #k highlighted; switches to 1,000 rounds and sees the grid shaded. Before/after screenshots in the PR.
+- **Estimate:** 60 min · **Actual:** —
+
+### PR16 — Dave's decision points: highlight deviations, let the user choose  `[ ]`
+- **Goal:** Every point where Dave can cheat is visible, labelled, and the user's to decide.
+- **Covers:** R27 · D24
+- **Scope:** `ctx.decide(point)` in the honest parties for trusted, announce, commitReveal and shared; `Policy` per role replacing the strategy subclasses; `decision` events with `deviates`; `RunOptions.overrides`; timeline rows for decisions highlighted when deviating; Dave's panel shows the pending decision with buttons for each option in step-through; choosing replays the round with the override and keeps the step cursor. Tests: every statistical test unchanged with policies; overriding "quit" to "reveal" on rung 2 yields a one-attempt round; overriding "reveal" to "quit" on rung 3 still ends with Dave's reconstructed value; decision events appear exactly at the documented points.
+- **Verify:** Deployed; on rung 2 make an honest Dave quit and watch the restart; on rung 3 make him quit and watch it change nothing.
+- **Estimate:** 60 min · **Actual:** —
+
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
 - **Covers:** R18, R19 (draft), R22
@@ -106,7 +123,7 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** A reader of the README alone can find the demo and understand the ladder. Rationale draft covers every R19 item, marked where later milestones will change it.
 - **Estimate:** 30 min · **Actual:** —
 
-**M2 checkpoint.** If actual time at this point exceeds 4.5 h, re-plan P1 before continuing: drop R13 and R12 first per the PRD cut order.
+**M2 checkpoint.** If actual time at this point exceeds 6.5 h, re-plan P1 before continuing: drop R12 first per the PRD cut order, then rung 4.
 
 ### PR7 — Rung 4: the bad dealer and the fake share  `[ ]`
 - **Goal:** Show plain secret sharing broken by one cheater.
@@ -172,12 +189,14 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 |---|---|---:|---:|---:|---|
 | Validation gate | PR1 to PR3 | 1.5 h | 1.5 h | 0.5 h | Over. The PRD gate assumed less infrastructure; the deploy pipeline and crypto tests are front-loaded here deliberately. See note. |
 | P0 build | PR4 to PR5 | 1.4 h | 2.9 h | 2.5 h (gate + core) | 0.4 h over |
-| P0 rationale draft | PR6 | 0.5 h | 3.4 h | 1.0 h (all rationale) | Within, with PR14 + video below |
-| P1 | PR7 to PR11 | 2.6 h | 6.0 h | 1.5 to 2.5 h | Slightly over the upper bound |
-| P2 | PR12 to PR13 | 1.5 h | 7.5 h | 1.5 h | Within |
-| Final rationale + video | PR14 + recording | 0.5 h + 0.5 h | 8.5 h | — | **Over the 8 h hard limit if everything is built** |
+| P0 shareable URLs (pulled forward) | PR11 | 0.25 h | 3.15 h | — | Done |
+| P0 polish | PR15 to PR16 | 2.0 h | 5.15 h | 2.0 h | Within |
+| P0 rationale draft | PR6 | 0.5 h | 5.65 h | 1.0 h (all rationale) | Within, with PR14 + video below |
+| P1 | PR7 to PR10 | 2.35 h | 8.0 h | 2.6 h | At the limit on estimates; actuals are running at ~50% of estimates |
+| P2 | PR12 to PR13 | 1.5 h | 9.5 h | 1.5 h | **Cut** unless actuals keep beating estimates |
+| Final rationale + video | PR14 + recording | 0.5 h + 0.5 h | 9.0 h without P2 | — | Over on estimates, inside on current actuals |
 
-**Reading this honestly.** P0 plus the full rationale and video is about 4.4 hours, comfortably inside the limit. P0 plus P1 is about 7 hours all-in. Building all of P2 as well totals roughly 8.5 hours, which breaks the hard limit. So P2 is conditional, not planned-in: PR13 (pin and compare) is only built if the M3 checkpoint shows at least 1.5 hours of headroom, and PR12 only if there is at least 1 hour. The PRD's cut order already says this; the numbers here make it concrete.
+**Reading this honestly (revised 2026-10-02).** On estimates, P0 with the polish tier plus P1 and the final rationale and video comes to about 9 hours, over the limit, and the Sandbox is out. On actuals so far (1.7 h spent against 3.4 h estimated for PR1 to PR5 and PR11) the same scope projects to about 5 hours. The plan therefore keeps P1 in and treats the Sandbox as cut, re-checking at the M2 checkpoint with real numbers.
 
 The PRD's scope table was refreshed to these figures on approval, so there is one set of numbers.
 
@@ -198,6 +217,8 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR9 | 40 min | — | |
 | PR10 | 30 min | — | |
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
+| PR15 | 60 min | — | |
+| PR16 | 60 min | — | |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR14 | 30 min | — | |
@@ -217,6 +238,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: User feedback after P0 code landed: added PR15 (explainer polish) and PR16 (Dave's decision points) to M2 ahead of P1; PR7/PR8 now depend on PR16. Budget: P0 ≈ 5.9 h incl. rationale draft, P1 would reach ≈ 8.5 h, so the Sandbox (PR12/13) is cut unless actuals keep beating estimates (so far 1.7 h actual vs 3.4 h estimated).
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
 - 2026-10-02: PR4 done (parallel lane A). Panels, SVG sequence-diagram timeline grouped by broadcast, step controls with "next phase" and arrow keys; leak test over rungs 0 to 2 and every Dave role.
