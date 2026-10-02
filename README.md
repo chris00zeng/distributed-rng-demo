@@ -1,1 +1,1 @@
-# ant-take-home
+# distributed-rng-demo
