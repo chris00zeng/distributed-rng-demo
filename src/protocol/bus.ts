@@ -40,9 +40,13 @@ export class Bus {
     return this.queue.length;
   }
 
+  /**
+   * Party goes dark: nothing it sends from now on is delivered. Envelopes it
+   * already handed to the bus are in flight and still arrive (a phone that dies
+   * after sending has still sent).
+   */
   drop(party: PartyId): void {
     this.dropped.add(party);
-    this.queue = this.queue.filter((e) => e.from !== party);
   }
 
   isDropped(party: PartyId): boolean {

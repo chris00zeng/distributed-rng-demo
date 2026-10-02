@@ -15,7 +15,7 @@ import {
 } from './types';
 
 export const MAX_ATTEMPTS = 64;
-const PHASE_ORDER: Phase[] = ['announce', 'commit', 'reveal', 'done'];
+const PHASE_ORDER: Phase[] = ['announce', 'commit', 'deal', 'reveal', 'reconstruct', 'done'];
 
 export interface RunOptions {
   /** Snapshot every party's view after every event (needed by the UI, costly in bulk). */
@@ -68,7 +68,7 @@ function runAttempt(
   const rng = makePrng(deriveSeed(scenario.seed, `attempt-${attempt}`));
   const bus = new Bus(rng);
   const parties = PARTY_IDS.map((id) => createParty(scenario, id)) as Party[];
-  let aborted: PartyId | null = null;
+  let aborted: { by: PartyId; cause: 'abort' | 'dropout' } | null = null;
   let globalPhase: Phase | null = null;
 
   const current = () => parties.map((p) => p.view());
@@ -96,7 +96,8 @@ function runAttempt(
     rng,
     scenario,
     send: (to, msg) => bus.send(id, to, msg),
-    abort: () => { if (aborted === null) aborted = id; },
+    abort: () => { if (aborted === null) aborted = { by: id, cause: 'abort' }; },
+    dropout: () => { if (aborted === null) aborted = { by: id, cause: 'dropout' }; },
   }));
 
   for (const p of parties) p.onStart(ctxs[p.id]!);
@@ -107,11 +108,12 @@ function runAttempt(
 
   for (;;) {
     if (aborted !== null) {
+      const { by, cause } = aborted;
       const restart = abortRestarts(scenario);
-      emit({ kind: 'abort', by: aborted, restart });
+      emit({ kind: 'abort', by, restart, cause });
       if (restart) return finish({ kind: 'restart' });
-      bus.drop(aborted);
-      emit({ kind: 'drop', party: aborted });
+      bus.drop(by);
+      emit({ kind: 'drop', party: by });
       aborted = null;
       checkPhase();
       continue;

@@ -92,12 +92,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Step through rung 2 aborter on the deployed site: Dave's panel shows the outcome before his reveal; the others' do not; the abort and restart are visible in the timeline.
 - **Estimate:** 45 min · **Actual:** —
 
-### PR5 — Shamir and rung 3 (the core insight)  `[ ]`
+### PR5 — Shamir and rung 3 (the core insight)  `[x]`
 - **Goal:** Dropout recovery works and the ladder's central sentence is on screen.
 - **Covers:** R2, R5, R8 (dropout toggle) · D5, D10, D11, D14 (structure only; no verify yet)
 - **Scope:** `crypto/shamir` (polynomial sampling, evaluation at 1..4, Lagrange at 0) with property tests (any *t*-subset reconstructs; *t*−1 shares reveal nothing); protocol `shared` with `verify=false`, `t=2`: deal after commit, reconstruct a silent party's value in the reveal phase using lowest-indexed *t* shares (D11), exclude a party that goes silent before dealing finishes; `dropout` fault injection; rung 3 copy including the core insight. Tests: rung 3 aborter ≈ 25% ± 5.5%, rung 3 honest dropout ≈ 25%, panels hold at most one share per dealer before reveal.
 - **Verify:** Deployed; step through rung 3 with Dave aborting: his message is missing, three reconstruction messages follow, the round completes, and the 1,000-round chart is flat at 25%.
-- **Estimate:** 40 min · **Actual:** —
+- **Estimate:** 40 min · **Actual:** 10 min (engine only; the step-through check waits on PR4's timeline)
 
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
@@ -191,7 +191,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR2 | 25 min | 10 min | 29 tests; noble-hashes v2 has no `equalBytes`, wrote one |
 | PR3 | 45 min | 35 min | Validation gate: chart compelling (Dave 100%, 4.0 tries/round); perf fix: no `view()` clones in the hot loop |
 | PR4 | 45 min | — | |
-| PR5 | 40 min | — | |
+| PR5 | 40 min | 10 min | 58 tests; dropout = `ctx.dropout()` after dealing; bus `drop` now keeps in-flight envelopes |
 | PR6 | 30 min | — | |
 | PR7 | 25 min | — | |
 | PR8 | 45 min | — | Rung 5 1,000-round browser time: — |
@@ -219,6 +219,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
+- 2026-10-02: PR5 done (parallel lane B). Rung 3 live in the engine and copy; UI step-through verification deferred to PR4's merge.
 - 2026-10-02: PR3 done. Added `onIdle` to the Party interface (a party acts when the bus is empty: how two last movers resolve, and how rung 3 will detect dropouts) and cheap `phase()`/`assignment()` accessors beside `view()`. Both are Technical Plan interface additions; recorded there too.
 - 2026-10-02: PR2 done. Added `sampleNonZeroScalar` and `deriveSeed` to the crypto core (needed by PR3/PR5) beyond the listed scope.
 - 2026-10-02: PR1 done. Repo made public because GitHub Pages on the free plan needs it (the brief requires a shareable repo link anyway).
