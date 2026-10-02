@@ -5,6 +5,10 @@ import { DEFAULT_SEED, rungScenario } from './protocol/scenario';
 import { DAVE, PARTY_NAMES, type Role, type Rung } from './protocol/types';
 import { share } from './sim/simulate';
 import { FairnessChart } from './ui/Chart';
+import { Panels } from './ui/Panels';
+import { StepControls } from './ui/StepControls';
+import { Timeline, buildRows } from './ui/Timeline';
+import { useRound } from './ui/useRound';
 import { ROUNDS, useSimulation } from './ui/useSimulation';
 
 export function App() {
@@ -16,6 +20,10 @@ export function App() {
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed), [rungId, daveRole, seed]);
   const roles = rolesFor(scenario.protocol, DAVE);
   const { tally, running, run } = useSimulation(scenario);
+  const round = useRound(scenario);
+  const rows = useMemo(() => buildRows(round.log.events), [round.log]);
+  const currentRow = rows.find((r) => r.first <= round.step && round.step <= r.last);
+  const broadcast = (currentRow?.recipients?.length ?? 0) > 1;
 
   const selectRung = (id: Rung) => {
     setRungId(id);
@@ -80,22 +88,46 @@ export function App() {
         </button>
       </section>
 
-      <section className="results">
-        <p className="headline" aria-live="polite">
-          {daveMaster === null ? (
-            <>Press <strong>Run</strong> to measure how often Dave gets the master bedroom.</>
-          ) : (
-            <>
-              Dave gets the master bedroom <strong>{(daveMaster * 100).toFixed(1)}%</strong> of the time.
-              Fair would be <strong>25%</strong>.
-              {tally && tally.attempts > tally.rounds ? (
-                <> It took him <strong>{(tally.attempts / tally.rounds).toFixed(1)}</strong> tries per round.</>
-              ) : null}
-            </>
-          )}
-        </p>
-        <FairnessChart tally={tally} total={ROUNDS} />
-      </section>
+      <div className="workspace">
+        <section className="col col--panels" aria-label="What each roommate knows">
+          <h2 className="col__title">One round, step by step</h2>
+          <StepControls
+            step={round.step}
+            last={round.last}
+            event={round.event}
+            broadcast={broadcast}
+            onPrev={round.prev}
+            onNext={round.next}
+            onNextPhase={round.nextPhase}
+            onReset={round.reset}
+            onEnd={round.end}
+          />
+          <Panels views={round.views} roles={scenario.roles} />
+        </section>
+
+        <section className="col col--timeline" aria-label="Messages">
+          <h2 className="col__title">Messages</h2>
+          <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
+        </section>
+
+        <section className="col col--results" aria-label="Fairness over many rounds">
+          <h2 className="col__title">{ROUNDS.toLocaleString()} rounds</h2>
+          <p className="headline" aria-live="polite">
+            {daveMaster === null ? (
+              <>Press <strong>Run</strong> to measure how often Dave gets the master bedroom.</>
+            ) : (
+              <>
+                Dave gets the master bedroom <strong>{(daveMaster * 100).toFixed(1)}%</strong> of the time.
+                Fair would be <strong>25%</strong>.
+                {tally && tally.attempts > tally.rounds ? (
+                  <> It took him <strong>{(tally.attempts / tally.rounds).toFixed(1)}</strong> tries per round.</>
+                ) : null}
+              </>
+            )}
+          </p>
+          <FairnessChart tally={tally} total={ROUNDS} />
+        </section>
+      </div>
     </main>
   );
 }

@@ -85,12 +85,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; the author runs rung 2 and decides whether the chart earns the rest of the build. Record the decision in this doc's changelog.
 - **Estimate:** 45 min · **Actual:** 35 min. Gate result: Dave 100% on rung 2 at 4.0 tries per round, chart streams in; author to confirm it reads as compelling. 1,000 rounds of the slowest rung-0-to-2 case take ~0.2 s in Node after removing a deep-clone from the driver's hot loop.
 
-### PR4 — Roommate panels, message timeline, step-through  `[ ]`
+### PR4 — Roommate panels, message timeline, step-through  `[x]`
 - **Goal:** Make the information asymmetry visible: who knows what, message by message.
 - **Covers:** R6, R7, R8 (P0 roles), R14 · D17
 - **Scope:** `RoundLog.views` snapshots per step; four panel components rendering a `PartyView` in plain words; SVG sequence-diagram timeline with lifelines, arrows, phase markers, a gap for dropped messages; next / previous / next-phase / reset; role picker wired to re-run; rung copy (title, protocol, attack, outcome, lesson) laid out per R14. Test: no `PartyView` contains another party's `myValue` before the reveal phase, across rungs 0 to 2 and all roles.
 - **Verify:** Step through rung 2 aborter on the deployed site: Dave's panel shows the outcome before his reveal; the others' do not; the abort and restart are visible in the timeline.
-- **Estimate:** 45 min · **Actual:** —
+- **Estimate:** 45 min · **Actual:** 10 min
 
 ### PR5 — Shamir and rung 3 (the core insight)  `[x]`
 - **Goal:** Dropout recovery works and the ladder's central sentence is on screen.
@@ -190,7 +190,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR1 | 20 min | 25 min | Node installed via Homebrew; repo made public for Pages |
 | PR2 | 25 min | 10 min | 29 tests; noble-hashes v2 has no `equalBytes`, wrote one |
 | PR3 | 45 min | 35 min | Validation gate: chart compelling (Dave 100%, 4.0 tries/round); perf fix: no `view()` clones in the hot loop |
-| PR4 | 45 min | — | |
+| PR4 | 45 min | 10 min | Panels render `PartyView` generically so rung 3+ fields appear without UI changes |
 | PR5 | 40 min | 10 min | 58 tests; dropout = `ctx.dropout()` after dealing; bus `drop` now keeps in-flight envelopes |
 | PR6 | 30 min | — | |
 | PR7 | 25 min | — | |
@@ -219,6 +219,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
+- 2026-10-02: PR4 done (parallel lane A). Panels, SVG sequence-diagram timeline grouped by broadcast, step controls with "next phase" and arrow keys; leak test over rungs 0 to 2 and every Dave role.
 - 2026-10-02: PR5 done (parallel lane B). Rung 3 live in the engine and copy; UI step-through verification deferred to PR4's merge.
 - 2026-10-02: PR3 done. Added `onIdle` to the Party interface (a party acts when the bus is empty: how two last movers resolve, and how rung 3 will detect dropouts) and cheap `phase()`/`assignment()` accessors beside `view()`. Both are Technical Plan interface additions; recorded there too.
 - 2026-10-02: PR2 done. Added `sampleNonZeroScalar` and `deriveSeed` to the crypto core (needed by PR3/PR5) beyond the listed scope.
