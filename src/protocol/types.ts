@@ -32,7 +32,11 @@ export interface Scenario {
 export type Msg =
   | { kind: 'announce'; value: Scalar }
   | { kind: 'commit'; commitment: Uint8Array }
-  | { kind: 'reveal'; value: Scalar; nonce: Uint8Array };
+  | { kind: 'reveal'; value: Scalar; nonce: Uint8Array }
+  /** Private: dealer's share of its own value for the recipient (x = recipient id + 1). */
+  | { kind: 'share'; dealer: PartyId; x: number; y: Scalar }
+  /** Broadcast during reconstruction of a silent dealer's value. */
+  | { kind: 'reconstructShare'; dealer: PartyId; x: number; y: Scalar };
 
 export interface Envelope {
   /** One seq per logical send; a broadcast fans out into envelopes sharing it. */
@@ -42,7 +46,13 @@ export interface Envelope {
   msg: Msg;
 }
 
-export type Phase = 'announce' | 'commit' | 'reveal' | 'done';
+export type Phase = 'announce' | 'commit' | 'deal' | 'reveal' | 'reconstruct' | 'done';
+
+export interface HeldShare {
+  dealer: PartyId;
+  x: number;
+  y: Scalar;
+}
 
 /** Exactly what one party knows right now. Panels render this and nothing else. */
 export interface PartyView {
@@ -54,6 +64,12 @@ export interface PartyView {
   revealed: Partial<Record<PartyId, Scalar>>;
   /** Parties whose reveal did not open their commitment. */
   invalid: PartyId[];
+  /** Shares this party holds, one per dealer in normal play (rungs 3+). */
+  sharesHeld: HeldShare[];
+  /** Values rebuilt from shares because the dealer went silent. */
+  reconstructed: Partial<Record<PartyId, Scalar>>;
+  /** Parties left out of the round because they went silent before dealing. */
+  excluded: PartyId[];
   combined?: Scalar;
   assignment?: Record<PartyId, Room>;
   /** Short note for the panel, e.g. "waiting for the others to reveal". */
@@ -66,8 +82,10 @@ export interface Ctx {
   readonly rng: Prng;
   readonly scenario: Scenario;
   send(to: PartyId | 'all', msg: Msg): void;
-  /** Stop participating. The driver decides what that means for this protocol. */
+  /** Stop participating on purpose. The driver decides what that means for this protocol. */
   abort(): void;
+  /** Stop participating by accident (dead phone). Same mechanics as abort, different label. */
+  dropout(): void;
 }
 
 export interface Party {
@@ -91,7 +109,7 @@ export type Event =
   | { kind: 'deliver'; env: Envelope }
   | { kind: 'drop'; party: PartyId }
   | { kind: 'phase'; phase: Phase }
-  | { kind: 'abort'; by: PartyId; restart: boolean }
+  | { kind: 'abort'; by: PartyId; restart: boolean; cause: 'abort' | 'dropout' }
   | { kind: 'outcome'; assignment: Record<PartyId, Room> }
   | { kind: 'stuck'; reason: string };
 

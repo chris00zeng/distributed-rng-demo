@@ -333,6 +333,7 @@ None open. Resolved 2026-10-02:
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and the implementation notes in PLAN.md. New decisions D2, D5, D6, D10, D11, D13, D15 are flagged as such; D6 replaces PLAN.md's WebCrypto with @noble/hashes.
 - 2026-10-02: Resolved T1 and T2 as D17 and D18 (user approved the recommendations).
+- 2026-10-02: PR5: `Ctx.dropout()` added beside `abort()` (same mechanics, labelled `cause: 'dropout'` on the abort event) and `Bus.drop` now keeps already-queued envelopes in flight, so a party that dies right after dealing has still dealt. Dropout fault injection is party-side: the `scenario.dropout` party calls `ctx.dropout()` after sending its shares. Phases gained `deal` and `reconstruct`. Interface refinements only; D11/D14 unchanged.
 - 2026-10-02: PR3 added `onIdle`, `phase()` and `assignment()` to the Party interface and an "Idle handling" section. Interface additions only; no decision changed.
 - 2026-10-02: Added Sandbox support for R23: `ProtocolConfig`, per-roommate roles (D19), multi-cheater semantics (D20), `ui/Sandbox`. Rung 6 live collusion moves from the rung to the Sandbox. Approved.
 - 2026-10-02: D2 changed from Preact to React (user preference; no tradeoff at this scale). Clarified which visuals are plain SVG and why.

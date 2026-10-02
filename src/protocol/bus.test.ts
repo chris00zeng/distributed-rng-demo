@@ -26,13 +26,13 @@ describe('bus', () => {
     expect(got).toEqual(expected);
   });
 
-  it('drop discards queued and future messages from that party', () => {
+  it('drop keeps in-flight messages but discards future ones from that party', () => {
     const bus = new Bus(makePrng('drop'));
     bus.send(2, 'all', { kind: 'announce', value: 1n });
     bus.drop(2);
-    expect(bus.pending()).toBe(0);
+    expect(bus.pending()).toBe(3);
     bus.send(2, 'all', { kind: 'announce', value: 1n });
-    expect(bus.pending()).toBe(0);
+    expect(bus.pending()).toBe(3);
     expect(bus.isDropped(2)).toBe(true);
   });
 });
