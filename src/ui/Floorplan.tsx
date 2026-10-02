@@ -9,6 +9,11 @@ export const PLAN_H = 200;
 
 interface Box { x: number; y: number; w: number; h: number }
 
+/** SVG wants width/height, not w/h; spreading a Box straight into <rect> drew nothing. */
+function rectAttrs({ x, y, w, h }: Box) {
+  return { x, y, width: w, height: h };
+}
+
 /** Room footprints. The Royal Suite is huge; the closet is a closet. */
 const LAYOUT: Record<Room, Box> = {
   master: { x: 4, y: 4, w: 196, h: 128 },
@@ -46,16 +51,16 @@ export function Floorplan({ assignment, mini = false, className, title }: Props)
     >
       {title ? <title>{title}</title> : null}
       <rect x="0" y="0" width={PLAN_W} height={PLAN_H} rx="6" className="fp__shell" />
-      {HALL.map((b, i) => <rect key={i} {...b} className="fp__hall" />)}
-      <rect {...BALCONY} className="fp__balcony" />
+      {HALL.map((b, i) => <rect key={i} {...rectAttrs(b)} className="fp__hall" />)}
+      <rect {...rectAttrs(BALCONY)} className="fp__balcony" />
       {ROOMS.map((room) => {
         const b = LAYOUT[room];
         const who = occupant(assignment, room);
         const info = ROOM_INFO[room];
         return (
           <g key={room} className={`fp__room fp__room--${room}`}>
-            <rect {...b} fill={info.color} className="fp__floor" />
-            {room === 'master' ? <rect {...ENSUITE} className="fp__ensuite" /> : null}
+            <rect {...rectAttrs(b)} fill={info.color} className="fp__floor" />
+            {room === 'master' ? <rect {...rectAttrs(ENSUITE)} className="fp__ensuite" /> : null}
             {room === 'master' && !mini ? (
               <g className="fp__chandelier" transform={`translate(${b.x + 70} ${b.y + 40})`}>
                 <line x1="0" y1="-14" x2="0" y2="0" />
