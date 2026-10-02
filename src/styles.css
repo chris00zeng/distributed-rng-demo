@@ -440,3 +440,14 @@ button.rung:disabled {
   stroke: var(--fg);
   stroke-width: 1.5;
 }
+
+/* Copy-link button next to the seed box */
+.copy-link {
+  font: inherit;
+  color: var(--fg);
+  background: var(--rung-bg);
+  border: 0;
+  border-radius: 6px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
