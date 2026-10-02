@@ -62,6 +62,8 @@ function DecisionBox({ decision, onOverride }: { decision: Decision; onOverride?
       <p className="decision__prompt">
         <strong>{name(decision.by)}'s move.</strong> {decision.point.prompt}
         {wouldGet ? <>. {name(decision.by)} would get <em>{wouldGet}</em></> : null}.
+        {ctx.ifQuit === 'reconstructed' ? ' If he quits, the others rebuild his number anyway.' : ''}
+        {ctx.ifQuit === 'restart' ? ' If he quits, his shares will not add up and the round restarts.' : ''}
       </p>
       <div className="decision__options">
         {decision.point.options.map((o) => {

@@ -125,12 +125,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 
 **M2 checkpoint.** If actual time at this point exceeds 6.5 h, re-plan P1 before continuing: drop R12 first per the PRD cut order, then rung 4.
 
-### PR7 — Rung 4: the bad dealer and the fake share  `[ ]`
+### PR7 — Rung 4: the bad dealer and the fake share  `[x]`
 - **Goal:** Show plain secret sharing broken by one cheater.
 - **Covers:** R3 (rung 4 half), R8 (P1 roles) · D11
 - **Scope:** Strategies `badDealer` (two polynomials, same `a_0`; A/B choice at reveal) and `fakeShare` (forged reconstruction share during a dropped party's reconstruction); rung 4 preset and copy, including the "why not just check all shares" line. Tests: rung 4 badDealer ≈ 43.75% ± 6.3%; rung 4 fakeShare + dropout = 100%.
 - **Verify:** Deployed; chart shows ≈44% for the bad dealer; polynomial visual not yet, so the timeline must make the two reconstructions legible.
-- **Estimate:** 25 min · **Actual:** —
+- **Estimate:** 25 min · **Actual:** 30 min (incl. the D11 → D25 correction and plan amendments)
 
 ### PR8 — Feldman VSS and rung 5  `[ ]`
 - **Goal:** Catch the cheat before anything is revealed.
@@ -212,7 +212,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR4 | 45 min | 10 min | Panels render `PartyView` generically so rung 3+ fields appear without UI changes |
 | PR5 | 40 min | 10 min | 58 tests; dropout = `ctx.dropout()` after dealing; bus `drop` now keeps in-flight envelopes |
 | PR6 | 30 min | — | |
-| PR7 | 25 min | — | |
+| PR7 | 25 min | 30 min | D11 replaced by D25; rung 4 = 100% for both attacks; `void` event |
 | PR8 | 45 min | — | Rung 5 1,000-round browser time: — |
 | PR9 | 40 min | 25 min | Lane A, parallel with PR16; god-view pools each roommate's held share; math toggle hides hex via CSS hooks |
 | PR10 | 30 min | — | |
@@ -238,6 +238,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.
 - 2026-10-02: PR16 done. Decision events are queued and logged right after the event that triggered them, so panel snapshots at a decision step show what the party knew when deciding. The move box is Dave-only (`playable` prop) for the ladder.
 - 2026-10-02: PR9 done (parallel with PR16). The visual pools every roommate's held share of a dealer (the dealer's view does not record what it sent), draws a metaphorical straight line with the pick as intercept, dashed until the secret is public. Math toggle hides nonce and commitment rows by CSS position hooks until explicit hooks exist.
 - 2026-10-02: PR8a (crypto half of PR8, parallel lane): `crypto/feldman` (commitments, share verification, opening, byte encoding) and `crypto/padding` (D23) with 14 tests; Node benchmark for 1,000 rounds of commit + verify recorded in the PR. PR8 itself stays open for the protocol wiring.

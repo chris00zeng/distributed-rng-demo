@@ -22,9 +22,19 @@ const POLICIES: Record<Role, Policy> = {
     if (pt.kind === 'reveal') return pt.context?.wouldWin ? 'reveal' : 'quit';
     return honestOption(pt);
   },
-  // Extended in PR7 (deal / reconstruct points) and PR12 (collusion).
-  badDealer: honest,
-  fakeShare: honest,
+  badDealer: (pt) => {
+    if (pt.kind === 'deal') return 'inconsistent';
+    if (pt.kind === 'revealTiming') return 'wait';
+    if (pt.kind === 'reveal') return pt.context?.wouldWin ? 'reveal' : 'quit';
+    return honestOption(pt);
+  },
+  fakeShare: (pt) => {
+    if (pt.kind === 'revealTiming') return 'wait';
+    if (pt.kind === 'reconstructTiming') return 'wait';
+    if (pt.kind === 'reconstructShare') return pt.context?.knowsValue && !pt.context?.wouldWin ? 'forge' : 'true';
+    return honestOption(pt);
+  },
+  // Extended in PR12 (collusion).
   colluder: honest,
 };
 

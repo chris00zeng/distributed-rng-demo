@@ -77,6 +77,8 @@ function runAttempt(
   const bus = new Bus(rng);
   const parties = PARTY_IDS.map((id) => createParty(scenario, id)) as Party[];
   let aborted: { by: PartyId; cause: 'abort' | 'dropout' } | null = null;
+  // Boxed so closures can set it without TypeScript narrowing it to `never` in the loop.
+  const voided: { current: { by: PartyId; reason: string } | null } = { current: null };
   let globalPhase: Phase | null = null;
 
   const current = () => parties.map((p) => p.view());
@@ -118,6 +120,7 @@ function runAttempt(
     },
     abort: () => { if (aborted === null) aborted = { by: id, cause: 'abort' }; },
     dropout: () => { if (aborted === null) aborted = { by: id, cause: 'dropout' }; },
+    void: (reason) => { if (voided.current === null) voided.current = { by: id, reason }; },
   }));
 
   for (const p of parties) p.onStart(ctxs[p.id]!);
@@ -128,6 +131,10 @@ function runAttempt(
   const finish = (outcome: AttemptOutcome) => ({ outcome, final: current() });
 
   for (;;) {
+    if (voided.current !== null) {
+      emit({ kind: 'void', by: voided.current.by, reason: voided.current.reason });
+      return finish({ kind: 'restart' });
+    }
     if (aborted !== null) {
       const { by, cause } = aborted;
       const restart = abortRestarts(scenario);
