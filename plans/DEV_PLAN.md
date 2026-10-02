@@ -64,12 +64,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 
 ## PRs
 
-### PR1 — Scaffold and deploy pipeline  `[ ]`
+### PR1 — Scaffold and deploy pipeline  `[x]`
 - **Goal:** An empty but deployed app, so every later PR is live on push.
 - **Covers:** R15, R17, R18 · D1, D2, D3, D15
 - **Scope:** Vite + React + TypeScript; Vitest with one trivial test; GitHub Actions workflow building to GitHub Pages on push to `main`; `base` path set; README with live link placeholder; `.gitignore` for `node_modules`/`dist`. Placeholder page with the title and ladder header. Pin `@noble/curves` and `@noble/hashes` versions (installed, not yet used).
 - **Verify:** Actions run green; the Pages URL renders the placeholder in Chrome, Safari and Firefox; `npm test` passes.
-- **Estimate:** 20 min · **Actual:** —
+- **Estimate:** 20 min · **Actual:** 25 min (plus ~10 min deciding on repo visibility; Pages requires a public repo, so the repo went public on 2026-10-02)
 
 ### PR2 — Crypto core with tests  `[ ]`
 - **Goal:** Field, PRNG, hash commitments and the room shuffle, each proven before any protocol uses them.
@@ -187,7 +187,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 
 | PR | Estimate | Actual | Notes |
 |---|---:|---:|---|
-| PR1 | 20 min | — | |
+| PR1 | 20 min | 25 min | Node installed via Homebrew; repo made public for Pages |
 | PR2 | 25 min | — | |
 | PR3 | 45 min | — | Validation gate decision: — |
 | PR4 | 45 min | — | |
@@ -219,4 +219,5 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
+- 2026-10-02: PR1 done. Repo made public because GitHub Pages on the free plan needs it (the brief requires a shareable repo link anyway).
 - 2026-10-02: Added "Dependencies and parallel work": per-PR prerequisites, four lanes after the gate, critical path (user request).
