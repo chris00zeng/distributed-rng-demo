@@ -8,6 +8,8 @@ import { share } from './sim/simulate';
 import { ArrangementGrid } from './ui/ArrangementGrid';
 import { FairnessChart } from './ui/Chart';
 import { Intro } from './ui/Intro';
+import { MathToggle, useMathToggle } from './ui/MathToggle';
+import { PolynomialVisual } from './ui/PolynomialVisual';
 import { Panels } from './ui/Panels';
 import { StepControls } from './ui/StepControls';
 import { Timeline, buildRows } from './ui/Timeline';
@@ -37,6 +39,7 @@ export function App() {
   };
 
   const [view, setView] = useState<View>('step');
+  const [showMath, setShowMath] = useMathToggle();
   const rung = RUNGS[rungId]!;
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed), [rungId, daveRole, seed]);
   const roles = rolesFor(scenario.protocol, DAVE);
@@ -73,7 +76,7 @@ export function App() {
   const daveBest = tally && tally.rounds - tally.stuck > 0 ? share(tally, DAVE, 'master') : null;
 
   return (
-    <main className="app">
+    <main className={`app ${showMath ? 'math-on' : 'math-off'}`}>
       <header className="masthead">
         <h1>Fair Rooms</h1>
         <p className="tagline">
@@ -128,6 +131,7 @@ export function App() {
         <button type="button" className="copy-link" onClick={() => void copyLink()} title="Copy a link that reproduces this exact run">
           {copied ? 'Copied' : 'Copy link'}
         </button>
+        <MathToggle on={showMath} onChange={setShowMath} />
         <div className="segmented" role="tablist" aria-label="View">
           <button type="button" role="tab" aria-selected={view === 'step'} className={view === 'step' ? 'is-on' : ''} onClick={() => setView('step')}>
             Step through one round
@@ -173,6 +177,7 @@ export function App() {
               <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
             </div>
           </div>
+          {scenario.protocol.kind === 'shared' ? <PolynomialVisual views={round.views} showMath={showMath} /> : null}
           <h2 className="col__title">The 24 arrangements</h2>
           <ArrangementGrid
             highlight={shownArrangement}

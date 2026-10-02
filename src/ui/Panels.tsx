@@ -38,7 +38,7 @@ export function Panels({ views, roles, decision, deviated, onOverride, playable 
             {deciding ? <DecisionBox decision={deciding} onOverride={onOverride} /> : null}
             <dl className="panel__facts">
               {facts.map((f, i) => (
-                <div key={i} className={`fact fact--${f.kind}`}>
+                <div key={i} className={`fact fact--${f.kind}`} data-fact={f.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}>
                   <dt>{f.label}</dt>
                   <dd>{f.value}</dd>
                 </div>

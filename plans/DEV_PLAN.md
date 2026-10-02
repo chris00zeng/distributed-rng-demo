@@ -139,12 +139,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; step through rung 5 bad dealer: complaint messages appear before any reveal, Dave is marked disqualified, the round completes. Record the measured 1,000-round wall time; if over 3 s in the browser, open a follow-up PR for the Worker fallback (D13).
 - **Estimate:** 45 min · **Actual:** —
 
-### PR9 — Polynomial visual and "show the math" toggle  `[ ]`
+### PR9 — Polynomial visual and "show the math" toggle  `[x]`
 - **Goal:** Make shares, bad shares and verification visible as geometry.
 - **Covers:** R11, R12
 - **Scope:** SVG line-through-points visual for rungs 3 to 5: share points, y-intercept as the secret, off-line bad share, two intercepts from two pairs on rung 4, ✗ mark from verification on rung 5. Real-number metaphor by default; the math toggle shows hashes, nonces, field values, commitments in the panels and the visual.
 - **Verify:** On rung 4 the two reconstructions visibly give two intercepts; on rung 5 the bad share is marked before reveal. Toggle shows real values that match the timeline.
-- **Estimate:** 40 min · **Actual:** —
+- **Estimate:** 40 min · **Actual:** 25 min (rung 3 geometry and toggle; the rung 4 two-intercept and rung 5 ✗ marks are wired as props for PR7/PR8 to feed)
 
 ### PR10 — Rung 6 explainer: threshold slider and phase chart  `[ ]`
 - **Goal:** End the ladder on the limit.
@@ -214,7 +214,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR6 | 30 min | — | |
 | PR7 | 25 min | — | |
 | PR8 | 45 min | — | Rung 5 1,000-round browser time: — |
-| PR9 | 40 min | — | |
+| PR9 | 40 min | 25 min | Lane A, parallel with PR16; god-view pools each roommate's held share; math toggle hides hex via CSS hooks |
 | PR10 | 30 min | — | |
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
@@ -239,6 +239,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 
 ## Changelog
 - 2026-10-02: PR16 done. Decision events are queued and logged right after the event that triggered them, so panel snapshots at a decision step show what the party knew when deciding. The move box is Dave-only (`playable` prop) for the ladder.
+- 2026-10-02: PR9 done (parallel with PR16). The visual pools every roommate's held share of a dealer (the dealer's view does not record what it sent), draws a metaphorical straight line with the pick as intercept, dashed until the secret is public. Math toggle hides nonce and commitment rows by CSS position hooks until explicit hooks exist.
 - 2026-10-02: PR15 done. Simulation chunks now yield via `scheduler.yield`/MessageChannel instead of `setTimeout(0)`: background tabs clamp timers to 1 s, which made a run look 30× slower than it was.
 - 2026-10-02: User feedback after P0 code landed: added PR15 (explainer polish) and PR16 (Dave's decision points) to M2 ahead of P1; PR7/PR8 now depend on PR16. Budget: P0 ≈ 5.9 h incl. rationale draft, P1 would reach ≈ 8.5 h, so the Sandbox (PR12/13) is cut unless actuals keep beating estimates (so far 1.7 h actual vs 3.4 h estimated).
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
