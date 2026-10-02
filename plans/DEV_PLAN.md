@@ -71,12 +71,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Actions run green; the Pages URL renders the placeholder in Chrome, Safari and Firefox; `npm test` passes.
 - **Estimate:** 20 min · **Actual:** 25 min (plus ~10 min deciding on repo visibility; Pages requires a public repo, so the repo went public on 2026-10-02)
 
-### PR2 — Crypto core with tests  `[ ]`
+### PR2 — Crypto core with tests  `[x]`
 - **Goal:** Field, PRNG, hash commitments and the room shuffle, each proven before any protocol uses them.
 - **Covers:** R5 · D5, D6, D7, D8
 - **Scope:** `crypto/field` (mod ℓ add/sub/mul/inv/pow, 64-byte reduce sampling), `crypto/prng` (sfc32 from string seed), `crypto/commit` (SHA-256 `H(value ‖ nonce)` + open), `crypto/shuffle` (SHA-256 stream, rejection-sampled Fisher–Yates over the four rooms). Tests: field known-answer values from Python `pow(a, -1, ℓ)`, `a·inv(a)=1`, commitment open/fail, shuffle chi-square over 20,000 seeds, rejection threshold unit test, sampling range test.
 - **Verify:** All tests green; no protocol code yet.
-- **Estimate:** 25 min · **Actual:** —
+- **Estimate:** 25 min · **Actual:** 10 min
 
 ### PR3 — Engine, rungs 0 to 2, simulation and chart (validation gate)  `[ ]`
 - **Goal:** The thin end-to-end slice: real protocols, Dave cheating, measured bias on screen.
@@ -188,7 +188,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR | Estimate | Actual | Notes |
 |---|---:|---:|---|
 | PR1 | 20 min | 25 min | Node installed via Homebrew; repo made public for Pages |
-| PR2 | 25 min | — | |
+| PR2 | 25 min | 10 min | 29 tests; noble-hashes v2 has no `equalBytes`, wrote one |
 | PR3 | 45 min | — | Validation gate decision: — |
 | PR4 | 45 min | — | |
 | PR5 | 40 min | — | |
@@ -219,5 +219,6 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
+- 2026-10-02: PR2 done. Added `sampleNonZeroScalar` and `deriveSeed` to the crypto core (needed by PR3/PR5) beyond the listed scope.
 - 2026-10-02: PR1 done. Repo made public because GitHub Pages on the free plan needs it (the brief requires a shareable repo link anyway).
 - 2026-10-02: Added "Dependencies and parallel work": per-PR prerequisites, four lanes after the gate, critical path (user request).
