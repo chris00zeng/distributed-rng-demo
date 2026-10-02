@@ -142,7 +142,10 @@ interface Party {
   readonly id: PartyId;
   onStart(ctx: Ctx): void;
   onMessage(env: Envelope, ctx: Ctx): void;
-  view(): PartyView;                 // exactly what this party knows right now
+  onIdle?(ctx: Ctx): boolean;        // bus is empty and the round is unfinished: "waited long enough"; return true after acting
+  view(): PartyView;                 // exactly what this party knows right now (deep copy; recorded per event for the UI)
+  phase(): Phase;                    // cheap accessors for the driver's hot loop
+  assignment(): Record<PartyId, Room> | undefined;
 }
 
 interface Ctx { send: Bus['send']; rng: Prng; scenario: Scenario; phase(): Phase }
@@ -255,6 +258,10 @@ Strategies are per party, so combinations the ladder never shows can occur. The 
 | `liar` on a non-dealer under `trusted` | Only the dealer (Dave) rolls; others' roles are ignored. | `rolesFor` offers `liar` for Dave only. |
 | Any strategy under a protocol where it has no hook | Falls through to honest behaviour. | `rolesFor` hides it. |
 
+### Idle handling
+
+When the bus is empty and no consensus has been reached, the driver asks each live party `onIdle` in bus order and stops at the first that acts. This models timeouts without clocks: a last mover who is waiting for another last mover blinks first; on rung 3 the honest parties use it to decide a silent dealer has dropped out and start reconstruction. If nobody acts, the round is `stuck` ("everyone is waiting for someone else").
+
 ### Deterministic ordering
 
 The bus holds a queue. `deliverNext` picks the next envelope by `(from-party order permuted per round by the PRNG, then seq)`. Broadcasts fan out into one envelope per recipient. Same seed, same scenario → byte-identical `RoundLog` (R13). Round *k* of a simulation uses seed `SHA-256(scenario.seed ‖ k)`.
@@ -326,5 +333,6 @@ None open. Resolved 2026-10-02:
 ## Changelog
 - 2026-10-02: Initial draft from the approved PRD and the implementation notes in PLAN.md. New decisions D2, D5, D6, D10, D11, D13, D15 are flagged as such; D6 replaces PLAN.md's WebCrypto with @noble/hashes.
 - 2026-10-02: Resolved T1 and T2 as D17 and D18 (user approved the recommendations).
+- 2026-10-02: PR3 added `onIdle`, `phase()` and `assignment()` to the Party interface and an "Idle handling" section. Interface additions only; no decision changed.
 - 2026-10-02: Added Sandbox support for R23: `ProtocolConfig`, per-roommate roles (D19), multi-cheater semantics (D20), `ui/Sandbox`. Rung 6 live collusion moves from the rung to the Sandbox. Approved.
 - 2026-10-02: D2 changed from Preact to React (user preference; no tradeoff at this scale). Clarified which visuals are plain SVG and why.
