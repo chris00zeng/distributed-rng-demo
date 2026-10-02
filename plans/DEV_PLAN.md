@@ -102,12 +102,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; step through rung 3 with Dave aborting: his message is missing, three reconstruction messages follow, the round completes, and the 1,000-round chart is flat at 25%.
 - **Estimate:** 40 min · **Actual:** 10 min (engine only; the step-through check waits on PR4's timeline)
 
-### PR15 — Explainer polish: arrangements, story, floorplan, one view at a time  `[ ]`
+### PR15 — Explainer polish: arrangements, story, floorplan, one view at a time  `[x]`
 - **Goal:** Make the mechanism legible: add the picks, wrap at 24, look up the arrangement.
 - **Covers:** R9, R10, R24, R25, R26 · D21, D22
 - **Scope:** `crypto/arrangements` (24 permutations, winning sets) replaces `crypto/shuffle`; picks `0..23` on rungs 0 to 4 and integer-sum-mod-24 combination in the protocols; steering by direct computation; `content/rooms` with the new names, descriptions and colours; `ui/Floorplan` (one house, colour-coded, to scale) and `ui/ArrangementGrid` (24 mini floorplans with initials; highlight one or shade by frequency); intro story section (collapsible); segmented control switching the step view and the simulation view; panels and timeline show picks as small numbers. Tests: arrangement table is a permutation set of size 24 with 6 wins per party; sum-mod-24 uniformity; all existing statistical tests still pass with the new combination; steering always lands in the winning set.
 - **Verify:** Deployed; a first-time visitor reads the intro, sees the house, picks rung 2, steps a round and sees arrangement #k highlighted; switches to 1,000 rounds and sees the grid shaded. Before/after screenshots in the PR.
-- **Estimate:** 60 min · **Actual:** —
+- **Estimate:** 60 min · **Actual:** 70 min (incl. ~10 min of plan amendments and ~10 min chasing a false perf alarm: background-tab timer throttling)
 
 ### PR16 — Dave's decision points: highlight deviations, let the user choose  `[ ]`
 - **Goal:** Every point where Dave can cheat is visible, labelled, and the user's to decide.
@@ -217,7 +217,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR9 | 40 min | — | |
 | PR10 | 30 min | — | |
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
-| PR15 | 60 min | — | |
+| PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
 | PR16 | 60 min | — | |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
@@ -238,6 +238,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR15 done. Simulation chunks now yield via `scheduler.yield`/MessageChannel instead of `setTimeout(0)`: background tabs clamp timers to 1 s, which made a run look 30× slower than it was.
 - 2026-10-02: User feedback after P0 code landed: added PR15 (explainer polish) and PR16 (Dave's decision points) to M2 ahead of P1; PR7/PR8 now depend on PR16. Budget: P0 ≈ 5.9 h incl. rationale draft, P1 would reach ≈ 8.5 h, so the Sandbox (PR12/13) is cut unless actuals keep beating estimates (so far 1.7 h actual vs 3.4 h estimated).
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.

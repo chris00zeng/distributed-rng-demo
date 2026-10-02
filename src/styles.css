@@ -451,3 +451,91 @@ button.rung:disabled {
   padding: 0.55rem 0.9rem;
   cursor: pointer;
 }
+
+/* ---------- PR15: intro, floorplan, arrangements, views ---------- */
+
+/* Intro story */
+.intro {
+  margin: 0 0 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--muted) 35%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rung-bg) 60%, transparent);
+}
+.intro__summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.intro__summary::-webkit-details-marker { display: none; }
+.intro__title { font-weight: 700; font-size: 1.1rem; }
+.intro__toggle { color: var(--accent); font-size: 0.9rem; white-space: nowrap; }
+.intro__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
+  gap: 1.5rem;
+  padding: 0 1rem 1rem;
+}
+@media (max-width: 900px) { .intro__body { grid-template-columns: 1fr; } }
+.intro__text p { margin: 0 0 0.75rem; max-width: 60ch; }
+.intro__hook { font-weight: 600; }
+.intro__howto-title { margin: 1rem 0 0.25rem; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.intro__howto { margin: 0; padding-left: 1.2rem; }
+.intro__howto li { margin-bottom: 0.25rem; }
+.intro__rooms { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.9rem; }
+.intro__rooms li { display: flex; align-items: baseline; gap: 0.5rem; }
+.intro__blurb { color: var(--muted); }
+
+/* Floorplan */
+.floorplan { width: 100%; height: auto; display: block; }
+.fp__shell { fill: color-mix(in srgb, var(--fg) 6%, transparent); stroke: color-mix(in srgb, var(--fg) 35%, transparent); stroke-width: 2; }
+.fp__hall { fill: color-mix(in srgb, var(--fg) 8%, transparent); }
+.fp__balcony { fill: color-mix(in srgb, var(--fg) 14%, transparent); stroke: color-mix(in srgb, var(--fg) 30%, transparent); stroke-dasharray: 3 3; }
+.fp__floor { opacity: 0.85; stroke: color-mix(in srgb, var(--bg) 70%, transparent); stroke-width: 2; }
+.fp__ensuite { fill: color-mix(in srgb, #fff 55%, transparent); stroke: color-mix(in srgb, var(--bg) 70%, transparent); }
+.fp__chandelier line, .fp__chandelier circle { stroke: #fff; fill: none; stroke-width: 1.5; }
+.fp__chandelier circle:not(:first-of-type) { fill: #fde68a; stroke: none; }
+.fp__label { fill: #fff; font-weight: 700; }
+.fp__blurb { fill: #fff; font-size: 8.5px; opacity: 0.9; }
+.fp__tiny { fill: var(--fg); font-size: 8px; opacity: 0.75; }
+.fp__tiny--hall { font-size: 8px; }
+.fp__who { fill: #fff; font-size: 20px; font-weight: 800; paint-order: stroke; stroke: rgba(0,0,0,0.35); stroke-width: 3px; }
+.fp__who--mini { font-size: 44px; }
+
+/* Arrangement grid */
+.agrid { margin: 0 0 1.5rem; }
+.agrid__cells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (max-width: 900px) { .agrid__cells { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .agrid__cells { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.agrid__cell {
+  position: relative;
+  border-radius: 8px;
+  padding: 0.3rem;
+  background: var(--rung-bg);
+  border: 2px solid transparent;
+  transition: opacity 150ms ease;
+}
+.agrid__cell--hit { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); opacity: 1 !important; }
+.agrid__cell--never { filter: saturate(0.2); }
+.agrid__num { display: block; text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; font-variant-numeric: tabular-nums; }
+.agrid__num small { color: var(--fg); font-weight: 600; }
+.agrid__caption { margin-top: 0.5rem; color: var(--muted); font-size: 0.9rem; }
+
+/* Segmented view switch */
+.segmented { display: inline-flex; border-radius: 8px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent); margin-left: auto; }
+.segmented button { font: inherit; font-weight: 600; padding: 0.5rem 0.9rem; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.segmented button.is-on { background: var(--accent); color: #fff; }
+.rerun { font: inherit; font-size: 0.85rem; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent); background: transparent; color: var(--fg); cursor: pointer; }
+.rerun:disabled { opacity: 0.5; cursor: progress; }
+
+/* Views: two columns instead of three */
+.workspace { grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 1fr); margin-bottom: 1.5rem; }
+.workspace--sim { grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr); }
+@media (max-width: 1000px) { .workspace, .workspace--sim { grid-template-columns: 1fr; } }

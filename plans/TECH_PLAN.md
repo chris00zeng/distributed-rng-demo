@@ -310,7 +310,7 @@ The bus holds a queue. `deliverNext` picks the next envelope by `(from-party ord
 | D10 | Rungs 3 to 6 are one protocol with `verify` and `t` flags (new) | One module per rung | Fewer code paths; makes "same protocol, harder attack" literally true. | Active |
 | D11 | Naive reconstruction uses lowest-indexed *t* shares (new) | Check all shares, abort on inconsistency | Textbook behaviour; makes rung 4 real. Objection addressed in copy and rationale. | Active |
 | D12 | Rung 2 abort → restart, unlimited, capped at 64 (PRD) | One abort per round | PRD decision; cap is a safety valve only. | Active |
-| D13 | Simulation chunked on the main thread with progressive chart (new) | Web Worker | Simpler build; no serialisation. Switch to a Worker only if rung 5 misses its budget. | Active |
+| D13 | Simulation chunked on the main thread with progressive chart (new); chunks yield via `scheduler.yield` or a MessageChannel hop, never `setTimeout` | Web Worker | Simpler build; no serialisation. Switch to a Worker only if rung 5 misses its budget. Timer-based yields are throttled to 1 s in background tabs. | Active |
 | D14 | Complaint → dealer publishes share or is disqualified; contribution excluded (PLAN.md) | Abort the round | Disqualification is free before any reveal. | Active |
 | D15 | Vitest for unit, property and statistical tests (new) | Jest; none | Native to Vite. Statistical tests are how R5 is proven. | Active |
 | D17 | Timeline steps one message at a time, with phase markers and a "next phase" button (new) | Per-phase stepping only | Dropouts and complaints only read at message granularity; the shortcut keeps long phases quick. | Active |
@@ -359,6 +359,7 @@ None open. Resolved 2026-10-02:
 - **Rung 0 and 1 steering:** `liar` and `lastMover` search random candidate values until the permutation gives Dave the master room, expected 4 tries (D18).
 
 ## Changelog
+- 2026-10-02: D13 refined: chunk yield uses `scheduler.yield`/MessageChannel (PR15).
 - 2026-10-02: Polish pass: D8 and D18 superseded by D21 (picks 0 to 23, sum mod 24, arrangement table) and D22 (direct steering); D23 padding at rung 5; D24 decision points and policies replacing subclass strategies, with `decision` events and replay overrides. New "Arrangements and picks" and "Decision points" sections.
 - 2026-10-02: Initial draft from the approved PRD and the implementation notes in PLAN.md. New decisions D2, D5, D6, D10, D11, D13, D15 are flagged as such; D6 replaces PLAN.md's WebCrypto with @noble/hashes.
 - 2026-10-02: Resolved T1 and T2 as D17 and D18 (user approved the recommendations).

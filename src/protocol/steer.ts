@@ -1,22 +1,17 @@
 /**
- * How a cheater who controls the last contribution picks it (Technical Plan D18):
- * try random candidates until the resulting permutation gives them the master
- * room. Expected 4 tries with four rooms. Honest about how the attack works.
+ * How a cheater who controls the last contribution picks it (Technical Plan D22):
+ * 6 of the 24 arrangements give them the Royal Suite, so they add up what the
+ * others contributed and choose the pick that lands on one. No search.
  */
-import { add, sampleScalar, type Scalar } from '../crypto/field';
-import type { Prng } from '../crypto/prng';
-import { assignRooms } from '../crypto/shuffle';
+import { steerPick } from '../crypto/arrangements';
+import type { Scalar } from '../crypto/field';
 import type { PartyId } from './types';
 
-export function steerContribution(rng: Prng, othersSum: Scalar, me: PartyId): Scalar {
-  for (let tries = 0; tries < 10_000; tries++) {
-    const s = sampleScalar(rng);
-    if (assignRooms(add(othersSum, s))[me] === 'master') return s;
-  }
-  throw new Error('steer: no winning contribution found');
+export function steerContribution(othersTotal: Scalar, me: PartyId): Scalar {
+  return steerPick(othersTotal, me);
 }
 
-/** Pick a combined value directly (rung 0's lying dealer). */
-export function steerCombined(rng: Prng, me: PartyId): Scalar {
-  return steerContribution(rng, 0n, me);
+/** Pick an arrangement number directly (rung 0's lying dealer). */
+export function steerCombined(me: PartyId): Scalar {
+  return steerPick(0n, me);
 }

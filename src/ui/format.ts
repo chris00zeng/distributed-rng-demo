@@ -1,13 +1,9 @@
 /** Plain-words formatting shared by panels, timeline and controls. */
-import type { Room } from '../crypto/shuffle';
+import { pickOf } from '../crypto/arrangements';
+import { ROOM_LABELS } from '../content/rooms';
 import { PARTY_IDS, PARTY_NAMES, type Event, type Msg, type PartyId, type Phase } from '../protocol/types';
 
-export const ROOM_LABELS: Record<Room, string> = {
-  master: 'Master w/ en-suite',
-  decent: 'Decent',
-  small: 'Small',
-  closet: 'Basically a closet',
-};
+export { ROOM_LABELS };
 
 export function roomLabel(room: string): string {
   return (ROOM_LABELS as Record<string, string>)[room] ?? room;
@@ -17,10 +13,30 @@ export function name(p: PartyId): string {
   return PARTY_NAMES[p];
 }
 
-/** Short hex for a field element: first 6 hex digits plus an ellipsis. */
+/**
+ * A contribution in plain words. Picks (0..23) print as themselves. Anything
+ * larger is a padded secret (rung 5+): the pick, then the padding in short hex
+ * so the two parts stay visibly distinct (D23).
+ */
 export function shortScalar(s: bigint): string {
+  if (s >= 0n && s < 24n) return s.toString();
   const hex = s.toString(16).padStart(64, '0');
-  return `${hex.slice(0, 6)}…`;
+  return `${pickOf(s)} (+ padding ${hex.slice(0, 6)}…)`;
+}
+
+/**
+ * The combined total and where it lands. Small totals print in full ("41 → wraps to #17");
+ * padded totals (rung 5+) print the pick they wrap to.
+ */
+export function totalLabel(total: bigint, k: number): string {
+  if (total < 24n) return `${total} → arrangement #${k}`;
+  if (total < 100_000n) return `${total} → wraps to arrangement #${k}`;
+  return `a padded total → wraps to arrangement #${k}`;
+}
+
+/** Just the pick hidden in a contribution. */
+export function pickLabel(s: bigint): string {
+  return `#${pickOf(s)}`;
 }
 
 export function shortBytes(b: Uint8Array): string {

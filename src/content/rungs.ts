@@ -30,7 +30,7 @@ export const RUNGS: readonly RungCopy[] = [
     title: 'Dave rolls',
     protocol: 'One roommate picks the random number for everyone.',
     attack: 'Dave lies about the roll.',
-    outcome: 'Dave takes the master bedroom 100% of the time.',
+    outcome: 'Dave takes the Royal Suite 100% of the time.',
     lesson: 'Trusting one party is not randomness.',
     attackRole: 'liar',
     available: true,
