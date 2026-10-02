@@ -1,14 +1,14 @@
 # Fair Rooms — Product Requirements
 
 Status: Approved (2026-10-02)
-Sources: the assignment brief (a PDF, not kept in the repo; its hard requirements are restated in the Traceability table) · the author's brainstorm notes (`PLAN.md`, retired 2026-10-02 once all three plan docs were approved; this doc, the Technical Plan and the Dev Plan are the source of truth)
+Sources: the project brief (a PDF, not kept in the repo; its hard requirements are restated in the Traceability table) · the author's brainstorm notes (`PLAN.md`, retired 2026-10-02 once all three plan docs were approved; this doc, the Technical Plan and the Dev Plan are the source of truth)
 Related: [Technical Plan](TECH_PLAN.md) · [Dev Plan](DEV_PLAN.md)
 
-Each requirement's **Source** column says where it came from: **External** (the assignment brief, a hard constraint), **User decision** (recorded in PLAN.md), or **Proposed** (added in this doc, open to challenge).
+Each requirement's **Source** column says where it came from: **External** (the project brief, a hard constraint), **User decision** (recorded in PLAN.md), or **Proposed** (added in this doc, open to challenge).
 
 ## Summary
 
-Fair Rooms is an interactive browser explainer built for a timed take-home assignment. It sits on two of the brief's themes: **Theme 1, Exploration & Understanding** (an interactive explainer that builds deep understanding of a technical concept) and **Theme 3, Systems & Reliability** (a distributed primitive that handles failure gracefully). Four roommates must randomly assign four unequal rooms while apart and not trusting each other. The demo is an **attack ladder**: each rung is a protocol for generating shared randomness, one roommate ("Dave") cheats in the way that rung allows, and a 1,000-round simulation measures how unfair the result is. Rung by rung, the fixes (commitments, secret sharing, verifiable secret sharing) close the attacks, until the final rung hits a limit no protocol can fix.
+Fair Rooms is an interactive browser explainer built in a timed, scoped sprint. It sits at the intersection of two themes: **Theme 1, Exploration & Understanding** (an interactive explainer that builds deep understanding of a technical concept) and **Theme 3, Systems & Reliability** (a distributed primitive that handles failure gracefully). Four roommates must randomly assign four unequal rooms while apart and not trusting each other. The demo is an **attack ladder**: each rung is a protocol for generating shared randomness, one roommate ("Dave") cheats in the way that rung allows, and a 1,000-round simulation measures how unfair the result is. Rung by rung, the fixes (commitments, secret sharing, verifiable secret sharing) close the attacks, until the final rung hits a limit no protocol can fix.
 
 The thesis: *fair randomness among mutually distrusting parties is a distributed systems problem in miniature: dropouts, adversaries, and a safety/liveness tradeoff.*
 
