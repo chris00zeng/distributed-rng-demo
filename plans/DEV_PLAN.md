@@ -109,12 +109,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; a first-time visitor reads the intro, sees the house, picks rung 2, steps a round and sees arrangement #k highlighted; switches to 1,000 rounds and sees the grid shaded. Before/after screenshots in the PR.
 - **Estimate:** 60 min · **Actual:** 70 min (incl. ~10 min of plan amendments and ~10 min chasing a false perf alarm: background-tab timer throttling)
 
-### PR16 — Dave's decision points: highlight deviations, let the user choose  `[ ]`
+### PR16 — Dave's decision points: highlight deviations, let the user choose  `[x]`
 - **Goal:** Every point where Dave can cheat is visible, labelled, and the user's to decide.
 - **Covers:** R27 · D24
 - **Scope:** `ctx.decide(point)` in the honest parties for trusted, announce, commitReveal and shared; `Policy` per role replacing the strategy subclasses; `decision` events with `deviates`; `RunOptions.overrides`; timeline rows for decisions highlighted when deviating; Dave's panel shows the pending decision with buttons for each option in step-through; choosing replays the round with the override and keeps the step cursor. Tests: every statistical test unchanged with policies; overriding "quit" to "reveal" on rung 2 yields a one-attempt round; overriding "reveal" to "quit" on rung 3 still ends with Dave's reconstructed value; decision events appear exactly at the documented points.
 - **Verify:** Deployed; on rung 2 make an honest Dave quit and watch the restart; on rung 3 make him quit and watch it change nothing.
-- **Estimate:** 60 min · **Actual:** —
+- **Estimate:** 60 min · **Actual:** 25 min
 
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
@@ -218,7 +218,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR10 | 30 min | — | |
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
-| PR16 | 60 min | — | |
+| PR16 | 60 min | 25 min | Roles are policies; decision events logged after their trigger; Dave-only move box |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR14 | 30 min | — | |
@@ -238,6 +238,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR16 done. Decision events are queued and logged right after the event that triggered them, so panel snapshots at a decision step show what the party knew when deciding. The move box is Dave-only (`playable` prop) for the ladder.
 - 2026-10-02: PR15 done. Simulation chunks now yield via `scheduler.yield`/MessageChannel instead of `setTimeout(0)`: background tabs clamp timers to 1 s, which made a run look 30× slower than it was.
 - 2026-10-02: User feedback after P0 code landed: added PR15 (explainer polish) and PR16 (Dave's decision points) to M2 ahead of P1; PR7/PR8 now depend on PR16. Budget: P0 ≈ 5.9 h incl. rationale draft, P1 would reach ≈ 8.5 h, so the Sandbox (PR12/13) is cut unless actuals keep beating estimates (so far 1.7 h actual vs 3.4 h estimated).
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.

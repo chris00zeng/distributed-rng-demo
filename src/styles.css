@@ -539,3 +539,21 @@ button.rung:disabled {
 .workspace { grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 1fr); margin-bottom: 1.5rem; }
 .workspace--sim { grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr); }
 @media (max-width: 1000px) { .workspace, .workspace--sim { grid-template-columns: 1fr; } }
+
+/* ---------- PR16: decisions ---------- */
+.tl__row--decision .tl__band { fill: color-mix(in srgb, var(--fg) 10%, transparent); stroke: color-mix(in srgb, var(--fg) 30%, transparent); stroke-dasharray: 3 3; }
+.tl__row--deviate .tl__band { fill: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tl__row--deviate .tl__band-text { font-weight: 700; }
+.panel--deviating { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.panel--deciding { outline: 2px dashed var(--accent); outline-offset: 2px; }
+.decision { margin: 0.4rem 0 0.6rem; padding: 0.6rem 0.7rem; border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+.decision--deviates { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.decision__prompt { margin: 0 0 0.5rem; font-size: 0.9rem; }
+.decision__options { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.decision__opt { font: inherit; font-size: 0.85rem; padding: 0.35rem 0.65rem; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--fg) 30%, transparent); background: var(--bg); color: var(--fg); cursor: pointer; }
+.decision__opt.is-cheat { border-color: var(--accent); }
+.decision__opt.is-taken { background: var(--fg); color: var(--bg); cursor: default; }
+.decision__opt.is-taken.is-cheat { background: var(--accent); color: #fff; }
+.decision__opt:disabled:not(.is-taken) { opacity: 0.5; cursor: default; }
+.decision__hint { margin: 0.45rem 0 0; font-size: 0.8rem; color: var(--muted); }
+.overrides { margin: 0 0 0.6rem; font-size: 0.9rem; color: var(--accent); display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }

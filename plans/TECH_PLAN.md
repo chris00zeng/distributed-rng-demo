@@ -359,6 +359,7 @@ None open. Resolved 2026-10-02:
 - **Rung 0 and 1 steering:** `liar` and `lastMover` search random candidate values until the permutation gives Dave the master room, expected 4 tries (D18).
 
 ## Changelog
+- 2026-10-02: PR16 implemented D24. Decisions raised inside a handler are logged after the triggering event; decisions with a single option are not logged; hidden (honest, non-Dave) decisions fold into the previous timeline row. Panels expose `playable` (default Dave) for the Sandbox to widen.
 - 2026-10-02: D13 refined: chunk yield uses `scheduler.yield`/MessageChannel (PR15).
 - 2026-10-02: Polish pass: D8 and D18 superseded by D21 (picks 0 to 23, sum mod 24, arrangement table) and D22 (direct steering); D23 padding at rung 5; D24 decision points and policies replacing subclass strategies, with `decision` events and replay overrides. New "Arrangements and picks" and "Decision points" sections.
 - 2026-10-02: Initial draft from the approved PRD and the implementation notes in PLAN.md. New decisions D2, D5, D6, D10, D11, D13, D15 are flagged as such; D6 replaces PLAN.md's WebCrypto with @noble/hashes.

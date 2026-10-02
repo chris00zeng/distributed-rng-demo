@@ -1,12 +1,18 @@
 /** Rung 2: commit to a hash of your pick first, reveal after everyone has committed. */
-import { commit, makeNonce, open } from '../../crypto/commit';
 import { arrangement, combine, samplePick } from '../../crypto/arrangements';
+import { commit, makeNonce, open } from '../../crypto/commit';
 import type { Scalar } from '../../crypto/field';
 import { PARTY_IDS, type Ctx, type Envelope, type PartyId, type Role } from '../types';
 import { BaseParty } from './base';
 
+export const REVEAL_TIMING_OPTIONS = [
+  { id: 'now', label: 'reveal now', honest: true },
+  { id: 'wait', label: 'let the others reveal first', honest: false },
+];
+
 export class CommitRevealParty extends BaseParty {
   protected revealed = false;
+  protected waiting = false;
 
   constructor(id: PartyId) {
     super(id, 'commit');
@@ -42,12 +48,43 @@ export class CommitRevealParty extends BaseParty {
 
   protected onAllCommitted(ctx: Ctx): void {
     this.state.phase = 'reveal';
-    this.reveal(ctx);
+    const choice = ctx.decide({ kind: 'revealTiming', prompt: 'Everyone has committed', options: REVEAL_TIMING_OPTIONS });
+    if (choice === 'now') {
+      this.reveal(ctx);
+    } else {
+      this.waiting = true;
+      this.state.note = 'letting the others reveal first';
+    }
   }
 
   protected onReveal(ctx: Ctx): void {
-    void ctx;
+    if (this.waiting && !this.revealed && this.count(this.state.revealed) === PARTY_IDS.length - 1) {
+      const wouldGet = arrangement(combine([this.othersSum(), this.state.myValue!]))[this.id]!;
+      const choice = ctx.decide({
+        kind: 'reveal',
+        prompt: 'Everyone else has revealed',
+        options: [
+          { id: 'reveal', label: 'reveal', honest: true },
+          { id: 'quit', label: 'quit so the round restarts', honest: false },
+        ],
+        context: { wouldGet, wouldWin: wouldGet === 'master' },
+      });
+      if (choice === 'quit') {
+        this.state.note = `would get the ${wouldGet}: quitting`;
+        ctx.abort();
+        return;
+      }
+      this.reveal(ctx);
+      return;
+    }
     this.maybeFinish();
+  }
+
+  /** Everyone else is also stalling. Nothing learned yet, so reveal honestly. */
+  onIdle(ctx: Ctx): boolean {
+    if (this.revealed || this.state.phase !== 'reveal') return false;
+    this.reveal(ctx);
+    return true;
   }
 
   protected reveal(ctx: Ctx): void {
@@ -69,44 +106,6 @@ export class CommitRevealParty extends BaseParty {
     for (const p of PARTY_IDS) if (p !== this.id) s += this.state.revealed[p] ?? 0n;
     return s;
   }
-}
-
-/**
- * Commits honestly, but waits to see every other reveal before revealing.
- * If the outcome is not the master room, aborts instead (the round restarts).
- */
-export class AborterCommitRevealParty extends CommitRevealParty {
-  protected override onAllCommitted(): void {
-    this.state.phase = 'reveal';
-    this.state.note = 'letting the others reveal first';
-  }
-
-  protected override onReveal(ctx: Ctx): void {
-    if (this.revealed) {
-      this.maybeFinish();
-      return;
-    }
-    if (this.count(this.state.revealed) < PARTY_IDS.length - 1) return;
-    const outcome = arrangement(combine([this.othersSum(), this.state.myValue!]));
-    if (outcome[this.id] === 'master') {
-      this.reveal(ctx);
-    } else {
-      this.state.note = `would get the ${outcome[this.id]}: aborting`;
-      ctx.abort();
-    }
-  }
-
-  /** Everyone else is also stalling. Nothing learned yet, so reveal honestly. */
-  onIdle(ctx: Ctx): boolean {
-    if (this.revealed || this.state.phase !== 'reveal') return false;
-    this.reveal(ctx);
-    return true;
-  }
-}
-
-export function createCommitRevealParty(role: Role, id: PartyId): CommitRevealParty {
-  if (role === 'aborter') return new AborterCommitRevealParty(id);
-  return new CommitRevealParty(id);
 }
 
 export const COMMIT_REVEAL_ROLES: Role[] = ['honest', 'aborter'];

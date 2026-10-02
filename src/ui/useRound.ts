@@ -2,13 +2,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { runRound } from '../protocol/driver';
 import type { Scenario } from '../protocol/types';
 
-/** One recorded round for the current scenario plus a cursor into its events. */
+/**
+ * One recorded round for the current scenario plus a cursor into its events.
+ * `overrides` replace a party's choice at a decision ordinal and replay the
+ * round from the same seed (PRD R27, D24); the cursor stays put.
+ */
 export function useRound(scenario: Scenario) {
-  const { log, result } = useMemo(() => runRound(scenario, { record: true }), [scenario]);
+  const [overrides, setOverrides] = useState<Record<number, string>>({});
+  const { log, result } = useMemo(() => runRound(scenario, { record: true, overrides }), [scenario, overrides]);
   const last = log.events.length - 1;
   const [step, setStepRaw] = useState(0);
 
-  useEffect(() => { setStepRaw(0); }, [scenario]);
+  useEffect(() => { setStepRaw(0); setOverrides({}); }, [scenario]);
+
+  const override = useCallback((index: number, option: string) => {
+    setOverrides((o) => ({ ...o, [index]: option }));
+  }, []);
+  const clearOverrides = useCallback(() => setOverrides({}), []);
 
   const setStep = useCallback((i: number) => setStepRaw(Math.max(0, Math.min(last, i))), [last]);
   const next = useCallback(() => setStepRaw((s) => Math.min(last, s + 1)), [last]);
@@ -45,5 +55,6 @@ export function useRound(scenario: Scenario) {
     event: log.events[clamped]!,
     views: log.views[clamped]!,
     setStep, next, prev, reset, end, nextPhase,
+    overrides, override, clearOverrides,
   };
 }

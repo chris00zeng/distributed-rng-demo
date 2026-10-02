@@ -82,5 +82,10 @@ export function describeEvent(e: Event, broadcast = false): string {
     case 'abort': return e.restart ? `${name(e.by)} quits. The round restarts.` : `${name(e.by)} quits. The others carry on without him.`;
     case 'outcome': return `Rooms assigned: ${PARTY_IDS.map((p) => `${name(p)} gets ${roomLabel(e.assignment[p])}`).join(', ')}.`;
     case 'stuck': return `Stuck: ${e.reason}.`;
+    case 'decision': {
+      const opt = e.point.options.find((o) => o.id === e.chosen);
+      const what = opt?.label ?? e.chosen;
+      return e.deviates ? `${name(e.by)} deviates: ${what}.` : `${name(e.by)} decides: ${what}.`;
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { PARTY_IDS, type Event, type PartyId } from '../protocol/types';
+import { DAVE, PARTY_IDS, type Event, type PartyId } from '../protocol/types';
 import { msgLabel, name, phaseLabel, roomLabel } from './format';
 
 /** A row of the sequence diagram: either one logical message or one marker event. */
@@ -11,7 +11,7 @@ export interface Row {
   /** recipients in delivery order; recipients[i] was delivered at event first + i */
   recipients?: PartyId[];
   label: string;
-  tone: 'normal' | 'phase' | 'abort' | 'drop' | 'outcome' | 'stuck' | 'start';
+  tone: 'normal' | 'phase' | 'abort' | 'drop' | 'outcome' | 'stuck' | 'start' | 'decision' | 'deviate';
   /** parties that are silent (dropped) at this row */
   silent: PartyId[];
 }
@@ -40,6 +40,19 @@ export function buildRows(events: Event[]): Row[] {
     }
     let label = '';
     let tone: Row['tone'] = 'normal';
+    if (e.kind === 'decision') {
+      // Show Dave's every decision; others' only when they deviate (D24, Dave-centric ladder).
+      if (e.by !== DAVE && !e.deviates) {
+        // Hidden: fold into the previous row so every event still maps to a row.
+        const prev = rows.at(-1);
+        if (prev) prev.last = i;
+        continue;
+      }
+      const opt = e.point.options.find((o) => o.id === e.chosen);
+      label = `${name(e.by)} ${e.deviates ? 'deviates' : 'decides'}: ${opt?.label ?? e.chosen}`;
+      rows.push({ first: i, last: i, kind: 'marker', label, tone: e.deviates ? 'deviate' : 'decision', silent: [...silent] });
+      continue;
+    }
     switch (e.kind) {
       case 'start': silent = []; label = e.attempt === 1 ? 'round begins' : `attempt ${e.attempt}: start over`; tone = 'start'; break;
       case 'phase': label = `phase: ${phaseLabel(e.phase)}`; tone = 'phase'; break;
@@ -47,6 +60,11 @@ export function buildRows(events: Event[]): Row[] {
       case 'drop': silent = [...silent, e.party]; label = `${name(e.party)} is silent`; tone = 'drop'; break;
       case 'outcome': label = `rooms: ${PARTY_IDS.map((p) => `${name(p)} ${roomLabel(e.assignment[p]).toLowerCase()}`).join(', ')}`; tone = 'outcome'; break;
       case 'stuck': label = `stuck: ${e.reason}`; tone = 'stuck'; break;
+      default: {
+        const prev = rows.at(-1);
+        if (prev) prev.last = i;
+        continue;
+      }
     }
     rows.push({ first: i, last: i, kind: 'marker', label, tone, silent: [...silent] });
   }

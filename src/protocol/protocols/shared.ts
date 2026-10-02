@@ -24,6 +24,7 @@ import type { Scalar } from '../../crypto/field';
 import { deal, lowestT, reconstruct, type Share } from '../../crypto/shamir';
 import { PARTY_IDS, type Ctx, type Envelope, type PartyId, type Role } from '../types';
 import { BaseParty } from './base';
+import { REVEAL_TIMING_OPTIONS } from './commitReveal';
 
 function xOf(id: PartyId): number {
   return id + 1;
@@ -32,6 +33,7 @@ function xOf(id: PartyId): number {
 export class SharedParty extends BaseParty {
   protected readonly t: number;
   protected revealedSelf = false;
+  protected waiting = false;
   protected dealt = false;
   /** Shares broadcast during reconstruction, per dealer. */
   protected pool = new Map<PartyId, Share[]>();
@@ -142,9 +144,15 @@ export class SharedParty extends BaseParty {
     this.onAllDealt(ctx);
   }
 
-  /** Hook: what to do once every share is in hand. Honest parties reveal at once. */
+  /** Every share is in hand. Decision: reveal now, or wait to see the others first. */
   protected onAllDealt(ctx: Ctx): void {
-    this.reveal(ctx);
+    const choice = ctx.decide({ kind: 'revealTiming', prompt: 'Everyone has dealt their shares', options: REVEAL_TIMING_OPTIONS });
+    if (choice === 'now') {
+      this.reveal(ctx);
+    } else {
+      this.waiting = true;
+      this.state.note = 'letting the others reveal first';
+    }
   }
 
   protected reveal(ctx: Ctx): void {
@@ -156,8 +164,29 @@ export class SharedParty extends BaseParty {
     this.maybeFinish();
   }
 
-  /** Hook: a valid reveal arrived. */
-  protected onRevealReceived(_ctx: Ctx): void {
+  /** A valid reveal arrived. If waiting and everyone else is in: decision to reveal or quit. */
+  protected onRevealReceived(ctx: Ctx): void {
+    if (this.waiting && !this.revealedSelf) {
+      const othersKnown = this.active().filter((p) => p !== this.id && this.knownValue(p) !== undefined).length;
+      if (othersKnown < this.active().length - 1) return;
+      const wouldGet = arrangement(combine([this.othersSum(), this.state.myValue!]))[this.id]!;
+      const choice = ctx.decide({
+        kind: 'reveal',
+        prompt: 'Everyone else has revealed',
+        options: [
+          { id: 'reveal', label: 'reveal', honest: true },
+          { id: 'quit', label: 'quit (the others already hold his shares)', honest: false },
+        ],
+        context: { wouldGet, wouldWin: wouldGet === 'master' },
+      });
+      if (choice === 'quit') {
+        this.state.note = `would get the ${wouldGet}: quitting (too late, they have my shares)`;
+        ctx.abort();
+        return;
+      }
+      this.reveal(ctx);
+      return;
+    }
     this.maybeFinish();
   }
 
@@ -224,6 +253,11 @@ export class SharedParty extends BaseParty {
    *   reveal: a party never revealed → reconstruct its value from shares.
    */
   onIdle(ctx: Ctx): boolean {
+    // Stalling while everyone else stalls too: nothing learned, so reveal honestly.
+    if (this.state.phase === 'reveal' && this.waiting && !this.revealedSelf) {
+      this.reveal(ctx);
+      return true;
+    }
     switch (this.state.phase) {
       case 'commit': {
         const silent = this.active().filter((p) => this.state.commitments[p] === undefined);
@@ -254,44 +288,7 @@ export class SharedParty extends BaseParty {
   }
 }
 
-/**
- * Deals honestly, waits to see every other reveal, and quits if the outcome is
- * not the master room. On this rung quitting changes nothing: the others
- * rebuild his number from the shares he already dealt.
- */
-export class AborterSharedParty extends SharedParty {
-  protected override onAllDealt(): void {
-    this.state.note = 'letting the others reveal first';
-  }
-
-  protected override onRevealReceived(ctx: Ctx): void {
-    if (this.revealedSelf) {
-      this.maybeFinish();
-      return;
-    }
-    const othersKnown = this.active().filter((p) => p !== this.id && this.knownValue(p) !== undefined).length;
-    if (othersKnown < this.active().length - 1) return;
-    const outcome = arrangement(combine([this.othersSum(), this.state.myValue!]));
-    if (outcome[this.id] === 'master') {
-      this.reveal(ctx);
-    } else {
-      this.state.note = `would get the ${outcome[this.id]}: quitting (too late, they have my shares)`;
-      ctx.abort();
-    }
-  }
-
-  /** Everyone else is stalling too. Nothing learned, so reveal honestly. */
-  override onIdle(ctx: Ctx): boolean {
-    if (this.state.phase === 'reveal' && !this.revealedSelf) {
-      this.reveal(ctx);
-      return true;
-    }
-    return super.onIdle(ctx);
-  }
-}
-
-export function createSharedParty(role: Role, id: PartyId, t: number): SharedParty {
-  if (role === 'aborter') return new AborterSharedParty(id, t);
+export function createSharedParty(id: PartyId, t: number): SharedParty {
   return new SharedParty(id, t);
 }
 

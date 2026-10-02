@@ -3,7 +3,7 @@ import { ROLE_LABELS, RUNGS } from './content/rungs';
 import { ROOM_INFO } from './content/rooms';
 import { rolesFor } from './protocol/parties';
 import { DEFAULT_SEED, rungScenario } from './protocol/scenario';
-import { DAVE, PARTY_NAMES, type Role, type Rung } from './protocol/types';
+import { DAVE, PARTY_NAMES, type Event, type PartyId, type Role, type Rung } from './protocol/types';
 import { share } from './sim/simulate';
 import { ArrangementGrid } from './ui/ArrangementGrid';
 import { FairnessChart } from './ui/Chart';
@@ -46,6 +46,18 @@ export function App() {
   const currentRow = rows.find((r) => r.first <= round.step && round.step <= r.last);
   const broadcast = (currentRow?.recipients?.length ?? 0) > 1;
   const outcomeStep = useMemo(() => round.log.events.findIndex((e) => e.kind === 'outcome'), [round.log]);
+  const currentDecision = round.event.kind === 'decision' ? (round.event as Extract<Event, { kind: 'decision' }>) : undefined;
+  // Who has left the honest path in the current attempt, as of this step (R27 highlighting).
+  const deviated = useMemo(() => {
+    const set = new Set<PartyId>();
+    for (let i = 0; i <= round.step; i++) {
+      const e = round.log.events[i]!;
+      if (e.kind === 'start') set.clear();
+      if (e.kind === 'decision' && e.deviates) set.add(e.by);
+    }
+    return set;
+  }, [round.log, round.step]);
+  const hasOverrides = Object.keys(round.overrides).length > 0;
   const shownArrangement = outcomeStep >= 0 && round.step >= outcomeStep ? (round.result.arrangement ?? null) : null;
 
   // Entering the simulation view with no result yet starts the run (R26).
@@ -142,7 +154,19 @@ export function App() {
                 onReset={round.reset}
                 onEnd={round.end}
               />
-              <Panels views={round.views} roles={scenario.roles} />
+              {hasOverrides ? (
+                <p className="overrides">
+                  You are playing {PARTY_NAMES[DAVE]}'s moves.{' '}
+                  <button type="button" className="rerun" onClick={round.clearOverrides}>Reset to his usual play</button>
+                </p>
+              ) : null}
+              <Panels
+                views={round.views}
+                roles={scenario.roles}
+                decision={currentDecision}
+                deviated={deviated}
+                onOverride={round.override}
+              />
             </div>
             <div className="col col--timeline">
               <h2 className="col__title">Messages</h2>
