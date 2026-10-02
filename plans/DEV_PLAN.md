@@ -136,12 +136,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Dragging *t* recolours the grid; no *t* is safe at *f* = 2 with *n* = 4; copy reads in 30 seconds.
 - **Estimate:** 30 min · **Actual:** —
 
-### PR11 — Shareable URLs  `[ ]`
+### PR11 — Shareable URLs  `[x]`
 - **Goal:** Reproduce any run from a link.
 - **Covers:** R13 · D16
 - **Scope:** `ui/urlState` serialising `Scenario` (protocol, flags, roles as one letter each, seed, dropout) to the query string and back; "copy link" button; seed shown and editable.
 - **Verify:** Paste a URL into a fresh tab: identical timeline and identical 1,000-round tally.
-- **Estimate:** 15 min · **Actual:** —
+- **Estimate:** 15 min · **Actual:** 15 min (built in parallel with PR4 and PR5 right after PR3; URL carries rung, roles, seed, and reserved `t`/`drop` for the Sandbox)
 
 **M3 checkpoint.** If actual time exceeds 7 h here, skip PR12 and PR13 and go to PR14.
 
@@ -197,7 +197,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR8 | 45 min | — | Rung 5 1,000-round browser time: — |
 | PR9 | 40 min | — | |
 | PR10 | 30 min | — | |
-| PR11 | 15 min | — | |
+| PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR14 | 30 min | — | |
@@ -221,6 +221,8 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 - 2026-10-02: Approved. PRD scope table refreshed to match.
 - 2026-10-02: PR4 done (parallel lane A). Panels, SVG sequence-diagram timeline grouped by broadcast, step controls with "next phase" and arrow keys; leak test over rungs 0 to 2 and every Dave role.
 - 2026-10-02: PR5 done (parallel lane B). Rung 3 live in the engine and copy; UI step-through verification deferred to PR4's merge.
+- 2026-10-02: PR11 done early (lane C, parallel with PR4 and PR5). URL format is `?rung=&roles=&seed=&t=&drop=`; Technical Plan D16 updated to match.
+- 2026-10-02: Default seed changed from `fair-rooms` to `roommates` so a first visitor stepping through sees Dave quit on rung 2 and get reconstructed into the closet on rung 3 (user decision, found by seed search during the PR11 rebase).
 - 2026-10-02: PR3 done. Added `onIdle` to the Party interface (a party acts when the bus is empty: how two last movers resolve, and how rung 3 will detect dropouts) and cheap `phase()`/`assignment()` accessors beside `view()`. Both are Technical Plan interface additions; recorded there too.
 - 2026-10-02: PR2 done. Added `sampleNonZeroScalar` and `deriveSeed` to the crypto core (needed by PR3/PR5) beyond the listed scope.
 - 2026-10-02: PR1 done. Repo made public because GitHub Pages on the free plan needs it (the brief requires a shareable repo link anyway).

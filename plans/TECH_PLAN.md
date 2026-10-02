@@ -291,7 +291,7 @@ The bus holds a queue. `deliverNext` picks the next envelope by `(from-party ord
 | D15 | Vitest for unit, property and statistical tests (new) | Jest; none | Native to Vite. Statistical tests are how R5 is proven. | Active |
 | D17 | Timeline steps one message at a time, with phase markers and a "next phase" button (new) | Per-phase stepping only | Dropouts and complaints only read at message granularity; the shortcut keeps long phases quick. | Active |
 | D18 | Rung 0/1 cheats find a winning value by random search over candidates (new) | Back-solve from a chosen room | Honest about how the attack works; expected 4 tries, negligible cost. | Active |
-| D16 | Scenario in the query string (`?p=shared&v=1&t=2&r=hhha&seed=…`, roles as one letter per roommate) (PLAN.md: shareable by URL) | Hash fragment; localStorage | Plain, copyable, GitHub Pages friendly. Pinned tallies are not in the URL. | Active |
+| D16 | App state in the query string: `?rung=2&roles=hhha&seed=…[&t=3][&drop=1]`, roles as one letter per roommate (h/l/m/a/b/f/c), params equal to defaults omitted, invalid values fall back to defaults (PLAN.md: shareable by URL) | Hash fragment; localStorage | Plain, copyable, GitHub Pages friendly. The ladder keys off the rung preset, so `rung=` replaces the earlier `p=`/`v=` protocol sketch; `t` and `drop` are reserved for the Sandbox. Pinned tallies are not in the URL. | Active |
 | D19 | `Scenario` carries a `ProtocolConfig` and a role per roommate from day one; the ladder uses presets (new, for R23) | Dave-only role, refactor later | Makes the Sandbox UI-only work and costs nothing now. | Active |
 | D20 | Multi-cheater combinations are not special-cased; the engine runs the mechanics and the Sandbox reports `stuck` and "no effect" cases plainly (new) | Forbid all but single-cheater configs | Measured answers to odd questions are the Sandbox's point; forbidding hides them. | Active |
 
@@ -334,6 +334,7 @@ None open. Resolved 2026-10-02:
 - 2026-10-02: Initial draft from the approved PRD and the implementation notes in PLAN.md. New decisions D2, D5, D6, D10, D11, D13, D15 are flagged as such; D6 replaces PLAN.md's WebCrypto with @noble/hashes.
 - 2026-10-02: Resolved T1 and T2 as D17 and D18 (user approved the recommendations).
 - 2026-10-02: PR5: `Ctx.dropout()` added beside `abort()` (same mechanics, labelled `cause: 'dropout'` on the abort event) and `Bus.drop` now keeps already-queued envelopes in flight, so a party that dies right after dealing has still dealt. Dropout fault injection is party-side: the `scenario.dropout` party calls `ctx.dropout()` after sending its shares. Phases gained `deal` and `reconstruct`. Interface refinements only; D11/D14 unchanged.
+- 2026-10-02: PR11 fixed D16's URL format to `?rung=&roles=&seed=&t=&drop=` (rung preset instead of the `p=`/`v=` protocol sketch).
 - 2026-10-02: PR3 added `onIdle`, `phase()` and `assignment()` to the Party interface and an "Idle handling" section. Interface additions only; no decision changed.
 - 2026-10-02: Added Sandbox support for R23: `ProtocolConfig`, per-roommate roles (D19), multi-cheater semantics (D20), `ui/Sandbox`. Rung 6 live collusion moves from the rung to the Sandbox. Approved.
 - 2026-10-02: D2 changed from Preact to React (user preference; no tradeoff at this scale). Clarified which visuals are plain SVG and why.

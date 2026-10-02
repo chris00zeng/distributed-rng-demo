@@ -10,11 +10,26 @@ import { StepControls } from './ui/StepControls';
 import { Timeline, buildRows } from './ui/Timeline';
 import { useRound } from './ui/useRound';
 import { ROUNDS, useSimulation } from './ui/useSimulation';
+import { useUrlState } from './ui/useUrlState';
 
 export function App() {
-  const [rungId, setRungId] = useState<Rung>(0);
-  const [daveRole, setDaveRole] = useState<Role>('honest');
-  const [seed, setSeed] = useState(DEFAULT_SEED);
+  // Rung, roles and seed live in the query string so any run is a shareable link (R13).
+  const [urlState, setUrlState] = useUrlState();
+  const rungId = urlState.rung;
+  const daveRole = urlState.roles[DAVE];
+  const seed = urlState.seed;
+  const setDaveRole = (role: Role) => setUrlState((s) => ({ ...s, roles: { ...s.roles, [DAVE]: role } }));
+  const setSeed = (next: string) => setUrlState({ seed: next || DEFAULT_SEED });
+  const [copied, setCopied] = useState(false);
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable: the address bar still has the link */
+    }
+  };
 
   const rung = RUNGS[rungId]!;
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed), [rungId, daveRole, seed]);
@@ -26,8 +41,7 @@ export function App() {
   const broadcast = (currentRow?.recipients?.length ?? 0) > 1;
 
   const selectRung = (id: Rung) => {
-    setRungId(id);
-    setDaveRole('honest');
+    setUrlState((s) => ({ ...s, rung: id, roles: { ...s.roles, [DAVE]: 'honest' } }));
   };
 
   const daveMaster = tally && tally.rounds - tally.stuck > 0 ? share(tally, DAVE, 'master') : null;
@@ -83,6 +97,9 @@ export function App() {
           <span>Seed</span>
           <input value={seed} onChange={(e) => setSeed(e.target.value)} spellCheck={false} />
         </label>
+        <button type="button" className="copy-link" onClick={() => void copyLink()} title="Copy a link that reproduces this exact run">
+          {copied ? 'Copied' : 'Copy link'}
+        </button>
         <button type="button" className="run" onClick={() => void run()} disabled={running}>
           {running ? 'Running…' : `Run ${ROUNDS.toLocaleString()} rounds`}
         </button>

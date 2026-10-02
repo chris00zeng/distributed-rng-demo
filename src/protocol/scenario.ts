@@ -1,6 +1,10 @@
 import { DAVE, type PartyId, type ProtocolConfig, type Role, type Rung, type Scenario } from './types';
 
-export const DEFAULT_SEED = 'fair-rooms';
+/**
+ * Chosen so a first visitor who steps through sees the story: on rung 2 Dave
+ * quits once and then wins; on rung 3 he quits and is reconstructed into the closet.
+ */
+export const DEFAULT_SEED = 'roommates';
 
 export const RUNG_PROTOCOLS: Record<Rung, ProtocolConfig> = {
   0: { kind: 'trusted' },
