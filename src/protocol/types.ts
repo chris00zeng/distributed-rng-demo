@@ -79,12 +79,39 @@ export interface PartyView {
   note?: string;
 }
 
+/** One way a party could act at a decision point. Exactly one option is the honest one. */
+export interface DecisionOption {
+  id: string;
+  label: string;
+  honest: boolean;
+}
+
+/**
+ * A point where a party could deviate from the honest protocol (Technical Plan D24).
+ * Honest parties raise these too; the party's policy (its role) picks the option,
+ * and the UI may override any decision and replay the round.
+ */
+export interface DecisionPoint {
+  /** Stable kind: 'roll' | 'speak' | 'steer' | 'revealTiming' | 'reveal' | 'deal' | 'reconstruct'. */
+  kind: string;
+  /** Short situation line for the panel, e.g. "Everyone else has revealed". */
+  prompt: string;
+  options: DecisionOption[];
+  /** What the party knows that bears on the choice (e.g. the room it would get). */
+  context?: Record<string, string | number | boolean>;
+}
+
+/** Maps a decision point to the id of the option a role takes. */
+export type Policy = (point: DecisionPoint, party: PartyId) => string;
+
 export interface Ctx {
   readonly id: PartyId;
   readonly n: number;
   readonly rng: Prng;
   readonly scenario: Scenario;
   send(to: PartyId | 'all', msg: Msg): void;
+  /** Ask the party's policy (or a UI override) which option to take. Returns the option id. */
+  decide(point: DecisionPoint): string;
   /** Stop participating on purpose. The driver decides what that means for this protocol. */
   abort(): void;
   /** Stop participating by accident (dead phone). Same mechanics as abort, different label. */
@@ -113,6 +140,8 @@ export type Event =
   | { kind: 'drop'; party: PartyId }
   | { kind: 'phase'; phase: Phase }
   | { kind: 'abort'; by: PartyId; restart: boolean; cause: 'abort' | 'dropout' }
+  /** A party chose at a decision point. `index` is its ordinal within the round, for overrides. */
+  | { kind: 'decision'; by: PartyId; index: number; point: DecisionPoint; chosen: string; deviates: boolean }
   | { kind: 'outcome'; assignment: Record<PartyId, Room> }
   | { kind: 'stuck'; reason: string };
 

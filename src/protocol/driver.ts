@@ -10,6 +10,7 @@ import { indexOfArrangement, type Room } from '../crypto/arrangements';
 import { PARTY_IDS as IDS } from './types';
 import { Bus } from './bus';
 import { createParty } from './parties';
+import { hasOption, policyFor } from './policies';
 import {
   PARTY_IDS, type Ctx, type Event, type Party, type PartyId, type PartyView, type Phase,
   type RoundLog, type RoundResult, type Scenario,
@@ -21,6 +22,8 @@ const PHASE_ORDER: Phase[] = ['announce', 'commit', 'deal', 'reveal', 'reconstru
 export interface RunOptions {
   /** Snapshot every party's view after every event (needed by the UI, costly in bulk). */
   record?: boolean;
+  /** Replace the policy's choice at decision ordinal `index` with an option id (UI "make Dave's move"). */
+  overrides?: Readonly<Record<number, string>>;
 }
 
 /** Does an abort restart the whole round under this protocol? */
@@ -33,6 +36,7 @@ export function runRound(scenario: Scenario, opts: RunOptions = {}): { log: Roun
   const events: Event[] = [];
   const views: PartyView[][] = [];
   const log: RoundLog = { scenario, events, views };
+  const decisions = { next: 0, overrides: opts.overrides ?? {} };
 
   const terminal = (e: Event, final: PartyView[]) => {
     events.push(e);
@@ -40,7 +44,7 @@ export function runRound(scenario: Scenario, opts: RunOptions = {}): { log: Roun
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const { outcome, final } = runAttempt(scenario, attempt, events, views, record);
+    const { outcome, final } = runAttempt(scenario, attempt, events, views, record, decisions);
     if (outcome.kind === 'assigned') {
       terminal({ kind: 'outcome', assignment: outcome.assignment }, final);
       const k = indexOfArrangement(IDS.map((p) => outcome.assignment[p]));
@@ -64,8 +68,10 @@ type AttemptOutcome =
   | { kind: 'restart' }
   | { kind: 'stuck'; reason: string };
 
+interface DecisionState { next: number; overrides: Readonly<Record<number, string>> }
+
 function runAttempt(
-  scenario: Scenario, attempt: number, events: Event[], views: PartyView[][], record: boolean,
+  scenario: Scenario, attempt: number, events: Event[], views: PartyView[][], record: boolean, decisions: DecisionState,
 ): { outcome: AttemptOutcome; final: PartyView[] } {
   const rng = makePrng(deriveSeed(scenario.seed, `attempt-${attempt}`));
   const bus = new Bus(rng);
@@ -78,6 +84,9 @@ function runAttempt(
     events.push(e);
     if (record) views.push(current());
   };
+  /** Decisions raised inside a handler are logged right after the event that triggered them. */
+  const pendingDecisions: Event[] = [];
+  const flush = () => { while (pendingDecisions.length) emit(pendingDecisions.shift()!); };
   /** Global phase = the least advanced live party. Emits a phase event on change. */
   const checkPhase = () => {
     let min = PHASE_ORDER.length - 1;
@@ -98,12 +107,22 @@ function runAttempt(
     rng,
     scenario,
     send: (to, msg) => bus.send(id, to, msg),
+    decide: (point) => {
+      if (point.options.length < 2) return point.options[0]?.id ?? '';
+      const index = decisions.next++;
+      const override = decisions.overrides[index];
+      const chosen = override !== undefined && hasOption(point, override) ? override : policyFor(scenario.roles[id])(point, id);
+      const opt = point.options.find((o) => o.id === chosen) ?? point.options.find((o) => o.honest)!;
+      pendingDecisions.push({ kind: 'decision', by: id, index, point, chosen: opt.id, deviates: !opt.honest });
+      return opt.id;
+    },
     abort: () => { if (aborted === null) aborted = { by: id, cause: 'abort' }; },
     dropout: () => { if (aborted === null) aborted = { by: id, cause: 'dropout' }; },
   }));
 
   for (const p of parties) p.onStart(ctxs[p.id]!);
   emit({ kind: 'start', attempt });
+  flush();
   checkPhase();
 
   const finish = (outcome: AttemptOutcome) => ({ outcome, final: current() });
@@ -124,6 +143,7 @@ function runAttempt(
     if (env) {
       parties[env.to]!.onMessage(env, ctxs[env.to]!);
       emit({ kind: 'deliver', env });
+      flush();
       checkPhase();
       continue;
     }
@@ -135,6 +155,8 @@ function runAttempt(
       const p = parties[id]!;
       if (!bus.isDropped(id) && p.onIdle?.(ctxs[id]!)) { acted = true; break; }
     }
+    flush();
+    checkPhase();
     if (!acted) return finish({ kind: 'stuck', reason: 'everyone is waiting for someone else' });
   }
 }

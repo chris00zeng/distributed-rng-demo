@@ -9,16 +9,20 @@ export class TrustedParty extends BaseParty {
     super(id, 'announce');
   }
 
-  protected roll(ctx: Ctx) {
-    return samplePick(ctx.rng);
-  }
-
   onStart(ctx: Ctx): void {
     if (this.id !== DAVE) {
       this.state.note = 'waiting for Dave to roll';
       return;
     }
-    const s = this.roll(ctx);
+    const choice = ctx.decide({
+      kind: 'roll',
+      prompt: 'Dave rolls for everyone',
+      options: [
+        { id: 'honest', label: 'roll honestly', honest: true },
+        { id: 'win', label: 'announce a number that puts him in the suite', honest: false },
+      ],
+    });
+    const s = choice === 'win' ? steerCombined(this.id) : samplePick(ctx.rng);
     this.state.myValue = s;
     ctx.send('all', { kind: 'announce', value: s });
     this.finishWith(s);
@@ -29,18 +33,6 @@ export class TrustedParty extends BaseParty {
     this.state.announced[DAVE] = env.msg.value;
     this.finishWith(env.msg.value);
   }
-}
-
-/** Dave announces a roll that happens to give him the master room. */
-export class LiarTrustedParty extends TrustedParty {
-  protected override roll(_ctx: Ctx) {
-    return steerCombined(this.id);
-  }
-}
-
-export function createTrustedParty(role: Role, id: PartyId): TrustedParty {
-  if (role === 'liar' && id === DAVE) return new LiarTrustedParty(id);
-  return new TrustedParty(id);
 }
 
 export const TRUSTED_ROLES: Record<'dealer' | 'other', Role[]> = {
