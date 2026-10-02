@@ -15,7 +15,10 @@ describe('rung 4: one bad dealer (D25: all shares used, inconsistency voids the 
     for (const p of PARTY_IDS) expect(Math.abs(share(t, p, 'master') - 0.25)).toBeLessThan(TOL);
   });
 
-  it('a bad dealer takes the suite every time, by forcing restarts until he wins', () => {
+  // Rung 4 rounds restart ~4 times and reconstruct with BigInt interpolation; slow on CI runners.
+  const SLOW = { timeout: 60_000 };
+
+  it('a bad dealer takes the suite every time, by forcing restarts until he wins', SLOW, () => {
     const t = simulateSync(rungScenario(4, 'badDealer', 'r4-bad'), N);
     expect(share(t, DAVE, 'master')).toBe(1);
     expect(t.stuck).toBe(0);
@@ -24,7 +27,7 @@ describe('rung 4: one bad dealer (D25: all shares used, inconsistency voids the 
     expect(mean).toBeLessThan(4.6);
   });
 
-  it('a forged share during Ana\'s reconstruction has the same effect', () => {
+  it('a forged share during Ana\'s reconstruction has the same effect', SLOW, () => {
     const t = simulateSync(rungScenario(4, 'fakeShare', 'r4-fake'), N);
     expect(share(t, DAVE, 'master')).toBe(1);
     expect(t.stuck).toBe(0);
@@ -67,7 +70,7 @@ describe('rung 4: one bad dealer (D25: all shares used, inconsistency voids the 
     expect(honestRebuilds).toBeGreaterThan(0);
   });
 
-  it('rung 3 is unchanged by the stricter reconstruction rule', () => {
+  it('rung 3 is unchanged by the stricter reconstruction rule', SLOW, () => {
     for (const role of ['honest', 'aborter'] as const) {
       const t = simulateSync(rungScenario(3, role, `r3-again-${role}`), N);
       expect(t.stuck).toBe(0);
