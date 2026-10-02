@@ -11,8 +11,7 @@ export function createParty(scenario: Scenario, id: PartyId): Party {
     case 'announce': return new AnnounceParty(id);
     case 'commitReveal': return new CommitRevealParty(id);
     case 'shared':
-      if (scenario.protocol.verify) throw new Error('verified sharing lands in PR8');
-      return createSharedParty(id, scenario.protocol.t);
+      return createSharedParty(id, scenario.protocol.t, scenario.protocol.verify);
   }
 }
 

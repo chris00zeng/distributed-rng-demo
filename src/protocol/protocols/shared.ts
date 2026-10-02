@@ -3,31 +3,32 @@
  * reveal. A party that goes silent after dealing is reconstructed by the rest
  * (Technical Plan, Abort and dropout semantics; D10, D14, D24, D25).
  *
- * `verify = false` here (plain Shamir). Feldman verification lands in PR8b.
+ * `verify = false` (rungs 3, 4): hash commitments, plain Shamir, D25 reconstruction.
+ * `verify = true`  (rungs 5, 6): Feldman commitments to the share polynomial,
+ * padded picks (D23), a complaint phase before any reveal, and verified
+ * reconstruction shares. Cheating is caught *and attributed*, so there is
+ * never a reason to restart.
  *
  * Phases as seen by one party:
- *   commit      — I have broadcast my hash commitment; waiting for all n.
+ *   commit      — I have broadcast my commitment; waiting for all n.
  *   deal        — Everyone committed; I dealt my shares; waiting to hold one share per dealer.
- *   reveal      — I hold a share from every dealer; waiting for all reveals.
+ *   complain    — (verify) I checked my shares and said so; complaints are being answered.
+ *   reveal      — Waiting for all reveals.
  *   reconstruct — Someone never revealed; we pool shares of their value.
  *   done        — Outcome known.
  *
- * Reconstruction (D25): a party uses every share it receives. With more than t
- * shares it can check that they lie on one line. If they do not, somebody lied,
- * but plain Shamir cannot say who, so the honest response is to call the round
- * void and start over. That is the hole rung 4 exploits and rung 5 closes.
- *
- * Decision points (D24): 'deal' (consistent | inconsistent), 'revealTiming',
- * 'reveal' (reveal | quit), 'reconstructTiming' (now | wait), 'reconstructShare'
- * (true | forge). Honest parties take the honest option; roles are policies.
- *
- * Dropout fault injection: the party named by `scenario.dropout` calls
- * `ctx.dropout()` right after dealing; its share envelopes are already in flight.
+ * Decision points (D24): 'deal' (consistent | inconsistent), 'answerComplaint'
+ * (publish | ignore; verify only), 'revealTiming', 'reveal' (reveal | quit),
+ * 'reconstructTiming' (now | wait), 'reconstructShare' (true | forge).
  */
 import { arrangement, combine, samplePick } from '../../crypto/arrangements';
 import { commit, makeNonce, open } from '../../crypto/commit';
 import { sampleScalar, type Scalar } from '../../crypto/field';
-import { isConsistent, reconstruct, samplePolynomial, sharesFrom, type Share } from '../../crypto/shamir';
+import {
+  commitPolynomial, commitmentOpens, decodeCommitment, encodeCommitment, totalOpens, verifyShare, type Commitment,
+} from '../../crypto/feldman';
+import { padPick } from '../../crypto/padding';
+import { evalPolynomial, isConsistent, reconstruct, samplePolynomial, sharesFrom, type Share } from '../../crypto/shamir';
 import { PARTY_IDS, PARTY_NAMES, type Ctx, type Envelope, type PartyId, type Role } from '../types';
 import { BaseParty } from './base';
 import { REVEAL_TIMING_OPTIONS } from './commitReveal';
@@ -36,35 +37,65 @@ function xOf(id: PartyId): number {
   return id + 1;
 }
 
+const NO_NONCE = new Uint8Array(0);
+
 export class SharedParty extends BaseParty {
   protected readonly t: number;
+  protected readonly verify: boolean;
   protected revealedSelf = false;
   protected waiting = false;
   protected dealt = false;
   protected dealtInconsistently = false;
+  /** My committed polynomial (verify mode). */
+  protected coeffs: Scalar[] = [];
+  /** Decoded Feldman commitments per dealer (verify mode). */
+  protected feldman = new Map<PartyId, Commitment>();
+  /** Parties that have told me they finished checking their shares (verify mode). */
+  protected checkedFrom = new Set<PartyId>();
+  /** Open complaints: dealer → complainants (verify mode). */
+  protected openComplaints = new Map<PartyId, Set<PartyId>>();
   /** Shares broadcast during reconstruction, per dealer. */
   protected pool = new Map<PartyId, Share[]>();
   /** Dealers whose reconstruction I have already contributed to. */
   protected contributed = new Set<PartyId>();
   /** Dealers for whom I handed in a forged share (so I do not "discover" my own lie). */
   protected forgedFor = new Set<PartyId>();
+  /** Rung 5: reveals not yet checked against their commitments (checked in aggregate at the end). */
+  protected pendingReveals = new Map<PartyId, Scalar>();
+  /** Complainants I have already answered (a complaint reaches me twice: directly and via "checked"). */
+  protected answered = new Set<PartyId>();
 
-  constructor(id: PartyId, t: number) {
+  constructor(id: PartyId, t: number, verify = false) {
     super(id, 'commit');
     this.t = t;
+    this.verify = verify;
   }
 
   // ---- commit ----
 
   onStart(ctx: Ctx): void {
-    // Rungs 3 and 4: a bare pick. Padding (D23) arrives with Feldman in PR8b.
-    const value = samplePick(ctx.rng);
-    const nonce = makeNonce(ctx.rng);
-    this.state.myValue = value;
-    this.state.myNonce = nonce;
-    const c = commit(value, nonce);
-    this.state.commitments[this.id] = c;
-    ctx.send('all', { kind: 'commit', commitment: c });
+    if (this.verify) {
+      // Rung 5+: pad the pick (a commitment to one of 24 numbers is guessable, D23),
+      // choose the share polynomial now, and commit to every coefficient.
+      const value = padPick(samplePick(ctx.rng), ctx.rng);
+      this.state.myValue = value;
+      this.state.padded = true;
+      this.coeffs = samplePolynomial(value, this.t, ctx.rng);
+      const c = commitPolynomial(this.coeffs);
+      this.feldman.set(this.id, c);
+      const bytes = encodeCommitment(c);
+      this.state.commitments[this.id] = bytes;
+      ctx.send('all', { kind: 'commit', commitment: bytes, points: c });
+    } else {
+      // Rungs 3 and 4: a bare pick under a hash commitment.
+      const value = samplePick(ctx.rng);
+      const nonce = makeNonce(ctx.rng);
+      this.state.myValue = value;
+      this.state.myNonce = nonce;
+      const c = commit(value, nonce);
+      this.state.commitments[this.id] = c;
+      ctx.send('all', { kind: 'commit', commitment: c });
+    }
     this.state.note = 'waiting for everyone to commit';
   }
 
@@ -73,6 +104,7 @@ export class SharedParty extends BaseParty {
     switch (msg.kind) {
       case 'commit':
         this.state.commitments[env.from] = msg.commitment;
+        if (this.verify) this.feldman.set(env.from, (msg.points as Commitment | undefined) ?? decodeCommitment(msg.commitment));
         this.maybeDeal(ctx);
         break;
       case 'share':
@@ -80,27 +112,58 @@ export class SharedParty extends BaseParty {
         this.holdShare({ dealer: msg.dealer, x: msg.x, y: msg.y });
         this.maybeReveal(ctx);
         break;
+      case 'complaint':
+        this.recordComplaint(ctx, env.from, msg.dealer);
+        break;
+      case 'checked':
+        this.checkedFrom.add(env.from);
+        for (const d of msg.complaints) this.recordComplaint(ctx, env.from, d);
+        this.maybeEnterReveal(ctx);
+        break;
+      case 'publishShare':
+        this.onPublishedShare(ctx, env.from, { x: msg.x, y: msg.y });
+        break;
       case 'reveal': {
-        const c = this.state.commitments[env.from];
-        if (!c || !open(c, msg.value, msg.nonce)) {
+        if (this.verify) {
+          // Checked in aggregate once every reveal is in (totalOpens); see maybeFinish.
+          this.pendingReveals.set(env.from, msg.value);
+        } else if (!this.opens(env.from, msg.value, msg.nonce)) {
           if (!this.state.invalid.includes(env.from)) this.state.invalid.push(env.from);
-          this.state.note = `${env.from}'s reveal does not match their commitment`;
+          this.state.note = `${PARTY_NAMES[env.from]}'s reveal does not match their commitment`;
           return;
         }
         this.state.revealed[env.from] = msg.value;
         this.onRevealReceived(ctx);
         break;
       }
-      case 'reconstructShare':
-        this.addToPool(msg.dealer, { x: msg.x, y: msg.y });
-        // Others consider this dealer gone. Join the reconstruction.
-        if (this.state.phase === 'reveal') this.state.phase = 'reconstruct';
+      case 'reconstructShare': {
+        const c = this.feldman.get(msg.dealer);
+        if (this.verify && c && !verifyShare(c, msg.x, msg.y)) {
+          // Rung 5: a reconstruction share is checked against the dealer's commitments.
+          if (!this.state.rejected.includes(env.from)) this.state.rejected.push(env.from);
+          this.state.note = `rejected ${PARTY_NAMES[env.from]}'s share of ${PARTY_NAMES[msg.dealer]}'s number: it fails the check`;
+        } else {
+          this.addToPool(msg.dealer, { x: msg.x, y: msg.y });
+        }
+        // Others consider this dealer gone. Join the reconstruction (even if I was
+        // still finishing the complaint phase: the others have moved on).
+        if (this.state.phase === 'reveal' || this.state.phase === 'complain') this.state.phase = 'reconstruct';
         this.contribute(ctx, msg.dealer);
         this.maybeReconstruct(ctx);
         break;
+      }
       default:
         break;
     }
+  }
+
+  private opens(from: PartyId, value: Scalar, nonce: Uint8Array): boolean {
+    if (this.verify) {
+      const c = this.feldman.get(from);
+      return !!c && commitmentOpens(c, value);
+    }
+    const c = this.state.commitments[from];
+    return !!c && open(c, value, nonce);
   }
 
   // ---- deal ----
@@ -117,7 +180,7 @@ export class SharedParty extends BaseParty {
     this.maybeReveal(ctx);
   }
 
-  /** Decision 'deal': one polynomial for everyone, or shares from two different ones. */
+  /** Decision 'deal': shares from the committed/one polynomial, or from two different ones. */
   protected dealShares(ctx: Ctx): void {
     const choice = ctx.decide({
       kind: 'deal',
@@ -128,9 +191,11 @@ export class SharedParty extends BaseParty {
       ],
     });
     const secret = this.state.myValue!;
-    const honest = sharesFrom(samplePolynomial(secret, this.t, ctx.rng), PARTY_IDS.length);
+    if (!this.verify) this.coeffs = samplePolynomial(secret, this.t, ctx.rng);
+    const honest = sharesFrom(this.coeffs, PARTY_IDS.length);
     if (choice === 'inconsistent') {
-      // Same secret, different slope: one recipient's share is off everyone else's line.
+      // Same secret, different slope: one recipient's share is off everyone else's line
+      // (and, on rung 5, off the committed line: that recipient's check fails).
       const other = sharesFrom(samplePolynomial(secret, this.t, ctx.rng), PARTY_IDS.length);
       const odd = PARTY_IDS.filter((p) => p !== this.id)[1]!;
       this.dealtInconsistently = true;
@@ -155,8 +220,9 @@ export class SharedParty extends BaseParty {
   }
 
   protected holdShare(share: { dealer: PartyId; x: number; y: Scalar }): void {
-    if (this.state.sharesHeld.some((s) => s.dealer === share.dealer)) return;
-    this.state.sharesHeld.push(share);
+    const i = this.state.sharesHeld.findIndex((s) => s.dealer === share.dealer);
+    if (i >= 0) this.state.sharesHeld[i] = share;
+    else this.state.sharesHeld.push(share);
   }
 
   protected heldFrom(dealer: PartyId): Share | undefined {
@@ -164,18 +230,106 @@ export class SharedParty extends BaseParty {
     return s ? { x: s.x, y: s.y } : undefined;
   }
 
+  // ---- complain (verify mode) ----
+
+  /** I hold a share from every dealer. Rung 5: check each against its commitments, complain, announce "checked". */
+  protected checkShares(ctx: Ctx): void {
+    const bad: PartyId[] = [];
+    for (const d of this.active()) {
+      if (d === this.id) continue;
+      const s = this.heldFrom(d)!;
+      if (!verifyShare(this.feldman.get(d)!, s.x, s.y)) bad.push(d);
+    }
+    for (const d of bad) {
+      this.recordComplaint(ctx, this.id, d);
+      ctx.send('all', { kind: 'complaint', dealer: d });
+    }
+    this.checkedFrom.add(this.id);
+    ctx.send('all', { kind: 'checked', complaints: bad });
+    this.state.note = bad.length ? `my share from ${bad.map((d) => PARTY_NAMES[d]).join(', ')} fails the check: complaining` : 'all my shares check out';
+    this.maybeEnterReveal(ctx);
+  }
+
+  protected recordComplaint(ctx: Ctx, complainant: PartyId, dealer: PartyId): void {
+    if (!this.state.complaints.includes(dealer)) this.state.complaints.push(dealer);
+    const set = this.openComplaints.get(dealer) ?? new Set<PartyId>();
+    set.add(complainant);
+    this.openComplaints.set(dealer, set);
+    if (dealer === this.id) this.answerComplaint(ctx, complainant);
+  }
+
+  /** Decision 'answerComplaint': publish the disputed share from my committed line, or ignore. */
+  protected answerComplaint(ctx: Ctx, complainant: PartyId): void {
+    if (this.answered.has(complainant)) return;
+    this.answered.add(complainant);
+    const choice = ctx.decide({
+      kind: 'answerComplaint',
+      prompt: `${PARTY_NAMES[complainant]} says his share does not check out`,
+      options: [
+        { id: 'publish', label: 'publish the share from the committed line', honest: true },
+        { id: 'ignore', label: 'say nothing (and be thrown out)', honest: false },
+      ],
+    });
+    if (choice === 'publish') {
+      const x = xOf(complainant);
+      ctx.send('all', { kind: 'publishShare', x, y: evalPolynomial(this.coeffs, x) });
+      this.openComplaints.get(this.id)?.delete(complainant);
+      this.state.note = `published ${PARTY_NAMES[complainant]}'s share for everyone to check`;
+    } else {
+      this.state.note = 'ignoring the complaint';
+    }
+    this.maybeEnterReveal(ctx);
+  }
+
+  protected onPublishedShare(ctx: Ctx, dealer: PartyId, share: Share): void {
+    const c = this.feldman.get(dealer);
+    if (c && verifyShare(c, share.x, share.y)) {
+      if (share.x === xOf(this.id)) this.holdShare({ dealer, ...share });
+      this.openComplaints.get(dealer)?.delete(PARTY_IDS[share.x - 1]!);
+      this.state.note = `${PARTY_NAMES[dealer]}'s published share checks out`;
+    } else {
+      this.disqualify(dealer);
+    }
+    this.maybeEnterReveal(ctx);
+  }
+
+  protected disqualify(dealer: PartyId): void {
+    if (!this.state.disqualified.includes(dealer)) this.state.disqualified.push(dealer);
+    if (!this.state.excluded.includes(dealer)) this.state.excluded.push(dealer);
+    this.openComplaints.delete(dealer);
+    this.state.note = `${PARTY_NAMES[dealer]} is out: shares that fail the check, and no answer`;
+  }
+
+  private unresolvedComplaints(): PartyId[] {
+    return [...this.openComplaints.entries()].filter(([d, s]) => s.size > 0 && this.active().includes(d)).map(([d]) => d);
+  }
+
+  /** Everyone has checked and no complaint is open: the reveal phase may begin. */
+  protected maybeEnterReveal(ctx: Ctx): void {
+    if (this.state.phase !== 'complain') return;
+    if (!this.active().every((p) => this.checkedFrom.has(p))) return;
+    if (this.unresolvedComplaints().length > 0) return;
+    this.state.phase = 'reveal';
+    this.onAllDealt(ctx);
+  }
+
   // ---- reveal ----
 
   protected maybeReveal(ctx: Ctx): void {
     if (this.state.phase !== 'deal') return;
     if (!this.active().every((p) => this.heldFrom(p) !== undefined)) return;
+    if (this.verify) {
+      this.state.phase = 'complain';
+      this.checkShares(ctx);
+      return;
+    }
     this.state.phase = 'reveal';
     this.onAllDealt(ctx);
   }
 
-  /** Every share is in hand. Decision: reveal now, or wait to see the others first. */
+  /** Every share is in hand (and checked). Decision: reveal now, or wait to see the others first. */
   protected onAllDealt(ctx: Ctx): void {
-    const choice = ctx.decide({ kind: 'revealTiming', prompt: 'Everyone has dealt their shares', options: REVEAL_TIMING_OPTIONS });
+    const choice = ctx.decide({ kind: 'revealTiming', prompt: this.verify ? 'Every share checks out' : 'Everyone has dealt their shares', options: REVEAL_TIMING_OPTIONS });
     if (choice === 'now') {
       this.reveal(ctx);
     } else {
@@ -188,7 +342,7 @@ export class SharedParty extends BaseParty {
     if (this.revealedSelf) return;
     this.revealedSelf = true;
     this.state.revealed[this.id] = this.state.myValue!;
-    ctx.send('all', { kind: 'reveal', value: this.state.myValue!, nonce: this.state.myNonce! });
+    ctx.send('all', { kind: 'reveal', value: this.state.myValue!, nonce: this.state.myNonce ?? NO_NONCE });
     this.state.note = 'waiting for everyone to reveal';
     this.maybeFinish();
   }
@@ -199,6 +353,7 @@ export class SharedParty extends BaseParty {
       const othersKnown = this.active().filter((p) => p !== this.id && this.knownValue(p) !== undefined).length;
       if (othersKnown < this.active().length - 1) return;
       const wouldGet = arrangement(combine([this.othersSum(), this.state.myValue!]))[this.id]!;
+      const restartIfQuit = this.dealtInconsistently && !this.verify;
       const choice = ctx.decide({
         kind: 'reveal',
         prompt: 'Everyone else has revealed',
@@ -206,14 +361,14 @@ export class SharedParty extends BaseParty {
           { id: 'reveal', label: 'reveal', honest: true },
           {
             id: 'quit',
-            label: this.dealtInconsistently ? 'quit (his shares will not add up: the round restarts)' : 'quit (the others already hold his shares)',
+            label: restartIfQuit ? 'quit (his shares will not add up: the round restarts)' : 'quit (the others already hold his shares)',
             honest: false,
           },
         ],
-        context: { wouldGet, wouldWin: wouldGet === 'master', ifQuit: this.dealtInconsistently ? 'restart' : 'reconstructed' },
+        context: { wouldGet, wouldWin: wouldGet === 'master', ifQuit: restartIfQuit ? 'restart' : 'reconstructed' },
       });
       if (choice === 'quit') {
-        this.state.note = this.dealtInconsistently
+        this.state.note = restartIfQuit
           ? `would get the ${wouldGet}: quitting (and his shares do not add up)`
           : `would get the ${wouldGet}: quitting (too late, they have my shares)`;
         ctx.abort();
@@ -237,6 +392,22 @@ export class SharedParty extends BaseParty {
     if (this.state.phase === 'done') return;
     if (this.state.phase !== 'reveal' && this.state.phase !== 'reconstruct') return;
     if (this.missing().length > 0) return;
+    if (this.verify && this.pendingReveals.size > 0) {
+      // Rung 5: one aggregate check of every reveal against the commitments; per-dealer
+      // fallback only when it fails, to name the liar.
+      const items = [...this.pendingReveals].map(([p, value]) => ({ dealer: p, commitment: this.feldman.get(p)!, value }));
+      if (!totalOpens(items)) {
+        for (const it of items) {
+          if (commitmentOpens(it.commitment, it.value)) continue;
+          if (!this.state.invalid.includes(it.dealer)) this.state.invalid.push(it.dealer);
+          delete this.state.revealed[it.dealer];
+          this.state.note = `${PARTY_NAMES[it.dealer]}'s reveal does not match their commitment`;
+        }
+        this.pendingReveals.clear();
+        if (this.missing().length > 0) return;
+      }
+      this.pendingReveals.clear();
+    }
     let s: Scalar = 0n;
     for (const p of this.active()) s += this.knownValue(p)!;
     this.finishWith(s);
@@ -267,7 +438,11 @@ export class SharedParty extends BaseParty {
       prompt: `Handing in his share of ${PARTY_NAMES[dealer]}'s number`,
       options: [
         { id: 'true', label: 'send the real share', honest: true },
-        { id: 'forge', label: 'send a forged share (the shares will not add up: restart)', honest: false },
+        {
+          id: 'forge',
+          label: this.verify ? 'send a forged share (it will fail the check and be rejected)' : 'send a forged share (the shares will not add up: restart)',
+          honest: false,
+        },
       ],
       context,
     });
@@ -310,7 +485,8 @@ export class SharedParty extends BaseParty {
 
   /**
    * Reconstruct a gone dealer once every live party's share is in (D25). With
-   * more than t shares, check they agree; if not, the round is void.
+   * more than t shares, check they agree; if not, the round is void. On rung 5
+   * every pooled share was already verified, so this never fires.
    */
   protected maybeReconstruct(ctx: Ctx, force = false): void {
     if (this.state.phase !== 'reconstruct') return;
@@ -339,10 +515,12 @@ export class SharedParty extends BaseParty {
 
   /**
    * Bus is empty and we are not done: someone we are waiting on is gone.
-   *   commit: a party never committed → exclude it (nothing was learned).
-   *   deal:   a dealer never dealt to me → exclude it.
-   *   reveal: a party never revealed → reconstruct its value from shares
-   *           (decision 'reconstructTiming': go first, or let others go first).
+   *   commit:   a party never committed → exclude it (nothing was learned).
+   *   deal:     a dealer never dealt to me → exclude it.
+   *   complain: a complaint went unanswered → that dealer is disqualified;
+   *             a party never said "checked" → exclude it.
+   *   reveal:   a party never revealed → reconstruct its value from shares
+   *             (decision 'reconstructTiming': go first, or let others go first).
    *   reconstruct: shares stopped arriving → proceed with what we have.
    */
   onIdle(ctx: Ctx): boolean {
@@ -368,10 +546,25 @@ export class SharedParty extends BaseParty {
         this.maybeReveal(ctx);
         return true;
       }
+      case 'complain': {
+        const unanswered = this.unresolvedComplaints();
+        const silent = this.active().filter((p) => !this.checkedFrom.has(p));
+        if (unanswered.length === 0 && silent.length === 0) return false;
+        for (const d of unanswered) this.disqualify(d);
+        // A party that dealt but never said "checked" (dead phone) has no complaints
+        // we will ever hear. It stays in: its value can still be rebuilt from shares.
+        for (const p of silent) this.checkedFrom.add(p);
+        if (silent.length) this.state.note = `${silent.map((p) => PARTY_NAMES[p]).join(', ')} never checked in; moving on`;
+        this.maybeEnterReveal(ctx);
+        return true;
+      }
       case 'reveal': {
         const gone = this.missing().filter((p) => p !== this.id);
         if (gone.length === 0) return false;
-        const choice = ctx.decide({
+        // If the others have already handed in shares for everyone who is gone, there is
+        // nothing to wait for: contribute now, no timing decision.
+        const othersWentFirst = gone.every((d) => (this.pool.get(d)?.length ?? 0) > 0);
+        const choice = othersWentFirst ? 'now' : ctx.decide({
           kind: 'reconstructTiming',
           prompt: `${gone.map((p) => PARTY_NAMES[p]).join(', ')} went silent`,
           options: [
@@ -405,8 +598,8 @@ export class SharedParty extends BaseParty {
   }
 }
 
-export function createSharedParty(id: PartyId, t: number): SharedParty {
-  return new SharedParty(id, t);
+export function createSharedParty(id: PartyId, t: number, verify = false): SharedParty {
+  return new SharedParty(id, t, verify);
 }
 
 export const SHARED_ROLES: Role[] = ['honest', 'aborter', 'badDealer', 'fakeShare'];

@@ -132,12 +132,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; chart shows ≈44% for the bad dealer; polynomial visual not yet, so the timeline must make the two reconstructions legible.
 - **Estimate:** 25 min · **Actual:** 30 min (incl. the D11 → D25 correction and plan amendments)
 
-### PR8 — Feldman VSS and rung 5  `[ ]`
+### PR8 — Feldman VSS and rung 5  `[x]`
 - **Goal:** Catch the cheat before anything is revealed.
 - **Covers:** R3 (rung 5 half), R5 · D4, D14
 - **Scope:** `crypto/feldman` (commitments `a_j·G`, share check) with tests (honest verifies, +1 tamper fails, inconsistent dealing fails exactly at the right recipients, known-answer `BASE·2 = BASE+BASE`); protocol `shared` with `verify=true`: `C_0` replaces the hash commitment, complaint phase, `publishShare`, disqualification and exclusion from `S`, verified reconstruction shares with rejection; rung 5 preset and copy. Tests: rung 5 badDealer ≈ 25% with Dave disqualified every round; rung 5 fakeShare ≈ 25% with the share rejected; benchmark 1,000 rounds of rung 5 under 3 s in Node, with the browser time recorded here.
 - **Verify:** Deployed; step through rung 5 bad dealer: complaint messages appear before any reveal, Dave is marked disqualified, the round completes. Record the measured 1,000-round wall time; if over 3 s in the browser, open a follow-up PR for the Worker fallback (D13).
-- **Estimate:** 45 min · **Actual:** —
+- **Estimate:** 45 min · **Actual:** 8 min (PR8a, crypto) + 40 min (PR8b, protocol, UI, worker pool)
 
 ### PR9 — Polynomial visual and "show the math" toggle  `[x]`
 - **Goal:** Make shares, bad shares and verification visible as geometry.
@@ -213,7 +213,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR5 | 40 min | 10 min | 58 tests; dropout = `ctx.dropout()` after dealing; bus `drop` now keeps in-flight envelopes |
 | PR6 | 30 min | — | |
 | PR7 | 25 min | 30 min | D11 replaced by D25; rung 4 = 100% for both attacks; `void` event |
-| PR8 | 45 min | — | Rung 5 1,000-round browser time: — |
+| PR8 | 45 min | 48 min | Rung 5 1,000 rounds: 3.4 s serial in Node, 1.46 s in the browser with the worker pool (15 cores) |
 | PR9 | 40 min | 25 min | Lane A, parallel with PR16; god-view pools each roommate's held share; math toggle hides hex via CSS hooks |
 | PR10 | 30 min | — | |
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
@@ -238,6 +238,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.
 - 2026-10-02: PR16 done. Decision events are queued and logged right after the event that triggered them, so panel snapshots at a decision step show what the party knew when deciding. The move box is Dave-only (`playable` prop) for the ladder.
 - 2026-10-02: PR9 done (parallel with PR16). The visual pools every roommate's held share of a dealer (the dealer's view does not record what it sent), draws a metaphorical straight line with the pick as intercept, dashed until the secret is public. Math toggle hides nonce and commitment rows by CSS position hooks until explicit hooks exist.
