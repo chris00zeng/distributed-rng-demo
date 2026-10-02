@@ -1,5 +1,5 @@
-import { add, type Scalar } from '../../crypto/field';
-import { assignRooms, type Room } from '../../crypto/shuffle';
+import { arrangement, combine, type Room } from '../../crypto/arrangements';
+import type { Scalar } from '../../crypto/field';
 import { PARTY_IDS, type Ctx, type Envelope, type Party, type PartyId, type PartyView, type Phase } from '../types';
 
 /** Shared state and helpers for every protocol party. */
@@ -25,17 +25,25 @@ export abstract class BaseParty implements Party {
     return this.state.assignment;
   }
 
-  protected finish(values: Partial<Record<PartyId, Scalar>>): void {
+  /** Integer total of the given contributions (not field arithmetic: D21). */
+  protected total(values: Partial<Record<PartyId, Scalar>>): Scalar {
     let s: Scalar = 0n;
-    for (const p of PARTY_IDS) s = add(s, values[p] ?? 0n);
-    this.finishWith(s);
+    for (const p of PARTY_IDS) s += values[p] ?? 0n;
+    return s;
   }
 
+  protected finish(values: Partial<Record<PartyId, Scalar>>): void {
+    this.finishWith(this.total(values));
+  }
+
+  /** `combined` is the integer total; the arrangement is its remainder mod 24. */
   protected finishWith(combined: Scalar): void {
-    const rooms = assignRooms(combined);
+    const k = combine([combined]);
+    const rooms = arrangement(k);
     const assignment = {} as Record<PartyId, Room>;
     for (const p of PARTY_IDS) assignment[p] = rooms[p]!;
     this.state.combined = combined;
+    this.state.arrangement = k;
     this.state.assignment = assignment;
     this.state.phase = 'done';
     this.state.note = undefined;

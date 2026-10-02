@@ -3,7 +3,13 @@ import { runRound } from '../protocol/driver';
 import { rolesFor } from '../protocol/parties';
 import { RUNG_PROTOCOLS, rungScenario } from '../protocol/scenario';
 import { DAVE, PARTY_IDS, type PartyId } from '../protocol/types';
-import { shortScalar } from './format';
+import { name, shortScalar } from './format';
+
+/** Does the panel text name party q with value v, as the per-party facts render it ("Ana: 17")? */
+function shows(text: string, q: PartyId, v: bigint): boolean {
+  const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[\\s·])${esc(name(q))}: ${esc(shortScalar(v))}(?=$|[\\s·])`, 'm').test(text);
+}
 import { panelFacts } from './panelFacts';
 import { buildRows, rowState } from './Timeline';
 
@@ -39,7 +45,7 @@ describe('panels never show what a roommate has not been told', () => {
             const text = panelFacts(views[p]!, p).map((f) => `${f.label}: ${f.value}`).join('\n');
             for (const q of PARTY_IDS) {
               if (q === p || values[q] === undefined) continue;
-              if (text.includes(shortScalar(values[q]!))) {
+              if (shows(text, q, values[q]!)) {
                 expect(told.has(`${q}->${p}`), `step ${step}: ${p} shows ${q}'s number without being told`).toBe(true);
               }
             }
@@ -55,10 +61,9 @@ describe('panels never show what a roommate has not been told', () => {
     const abortStep = log.events.findIndex((e) => e.kind === 'abort');
     const views = log.views[abortStep]!;
     const daveText = panelFacts(views[DAVE]!, DAVE).map((f) => f.value).join(' ');
-    for (const q of [0, 1, 2] as const) expect(daveText).toContain(shortScalar(views[q]!.myValue!));
-    const dave = shortScalar(views[DAVE]!.myValue!);
+    for (const q of [0, 1, 2] as const) expect(shows(daveText, q, views[q]!.myValue!)).toBe(true);
     for (const p of [0, 1, 2] as const) {
-      expect(panelFacts(views[p]!, p).map((f) => f.value).join(' ')).not.toContain(dave);
+      expect(shows(panelFacts(views[p]!, p).map((f) => f.value).join(' '), DAVE, views[DAVE]!.myValue!)).toBe(false);
     }
   });
 });

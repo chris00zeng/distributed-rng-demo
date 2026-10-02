@@ -1,5 +1,5 @@
-/** Rung 0: one roommate (Dave) rolls for everyone. */
-import { sampleScalar } from '../../crypto/field';
+/** Rung 0: one roommate (Dave) rolls an arrangement number for everyone. */
+import { samplePick } from '../../crypto/arrangements';
 import { DAVE, type Ctx, type Envelope, type PartyId, type Role } from '../types';
 import { steerCombined } from '../steer';
 import { BaseParty } from './base';
@@ -10,7 +10,7 @@ export class TrustedParty extends BaseParty {
   }
 
   protected roll(ctx: Ctx) {
-    return sampleScalar(ctx.rng);
+    return samplePick(ctx.rng);
   }
 
   onStart(ctx: Ctx): void {
@@ -33,8 +33,8 @@ export class TrustedParty extends BaseParty {
 
 /** Dave announces a roll that happens to give him the master room. */
 export class LiarTrustedParty extends TrustedParty {
-  protected override roll(ctx: Ctx) {
-    return steerCombined(ctx.rng, this.id);
+  protected override roll(_ctx: Ctx) {
+    return steerCombined(this.id);
   }
 }
 

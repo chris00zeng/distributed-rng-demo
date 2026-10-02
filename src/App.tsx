@@ -1,16 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ROLE_LABELS, RUNGS } from './content/rungs';
+import { ROOM_INFO } from './content/rooms';
 import { rolesFor } from './protocol/parties';
 import { DEFAULT_SEED, rungScenario } from './protocol/scenario';
 import { DAVE, PARTY_NAMES, type Role, type Rung } from './protocol/types';
 import { share } from './sim/simulate';
+import { ArrangementGrid } from './ui/ArrangementGrid';
 import { FairnessChart } from './ui/Chart';
+import { Intro } from './ui/Intro';
 import { Panels } from './ui/Panels';
 import { StepControls } from './ui/StepControls';
 import { Timeline, buildRows } from './ui/Timeline';
 import { useRound } from './ui/useRound';
 import { ROUNDS, useSimulation } from './ui/useSimulation';
 import { useUrlState } from './ui/useUrlState';
+
+type View = 'step' | 'sim';
 
 export function App() {
   // Rung, roles and seed live in the query string so any run is a shareable link (R13).
@@ -31,6 +36,7 @@ export function App() {
     }
   };
 
+  const [view, setView] = useState<View>('step');
   const rung = RUNGS[rungId]!;
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed), [rungId, daveRole, seed]);
   const roles = rolesFor(scenario.protocol, DAVE);
@@ -39,12 +45,20 @@ export function App() {
   const rows = useMemo(() => buildRows(round.log.events), [round.log]);
   const currentRow = rows.find((r) => r.first <= round.step && round.step <= r.last);
   const broadcast = (currentRow?.recipients?.length ?? 0) > 1;
+  const outcomeStep = useMemo(() => round.log.events.findIndex((e) => e.kind === 'outcome'), [round.log]);
+  const shownArrangement = outcomeStep >= 0 && round.step >= outcomeStep ? (round.result.arrangement ?? null) : null;
+
+  // Entering the simulation view with no result yet starts the run (R26).
+  useEffect(() => {
+    if (view === 'sim' && tally === null && !running) void run();
+  }, [view, tally, running, run]);
 
   const selectRung = (id: Rung) => {
     setUrlState((s) => ({ ...s, rung: id, roles: { ...s.roles, [DAVE]: 'honest' } }));
   };
 
-  const daveMaster = tally && tally.rounds - tally.stuck > 0 ? share(tally, DAVE, 'master') : null;
+  const best = ROOM_INFO.master.label;
+  const daveBest = tally && tally.rounds - tally.stuck > 0 ? share(tally, DAVE, 'master') : null;
 
   return (
     <main className="app">
@@ -55,6 +69,8 @@ export function App() {
           nobody trusts anybody?
         </p>
       </header>
+
+      <Intro />
 
       <nav className="ladder" aria-label="Attack ladder">
         {RUNGS.map((r) => (
@@ -100,51 +116,83 @@ export function App() {
         <button type="button" className="copy-link" onClick={() => void copyLink()} title="Copy a link that reproduces this exact run">
           {copied ? 'Copied' : 'Copy link'}
         </button>
-        <button type="button" className="run" onClick={() => void run()} disabled={running}>
-          {running ? 'Running…' : `Run ${ROUNDS.toLocaleString()} rounds`}
-        </button>
+        <div className="segmented" role="tablist" aria-label="View">
+          <button type="button" role="tab" aria-selected={view === 'step'} className={view === 'step' ? 'is-on' : ''} onClick={() => setView('step')}>
+            Step through one round
+          </button>
+          <button type="button" role="tab" aria-selected={view === 'sim'} className={view === 'sim' ? 'is-on' : ''} onClick={() => setView('sim')}>
+            Run {ROUNDS.toLocaleString()} rounds
+          </button>
+        </div>
       </section>
 
-      <div className="workspace">
-        <section className="col col--panels" aria-label="What each roommate knows">
-          <h2 className="col__title">One round, step by step</h2>
-          <StepControls
-            step={round.step}
-            last={round.last}
-            event={round.event}
-            broadcast={broadcast}
-            onPrev={round.prev}
-            onNext={round.next}
-            onNextPhase={round.nextPhase}
-            onReset={round.reset}
-            onEnd={round.end}
+      {view === 'step' ? (
+        <section className="view view--step" aria-label="One round, step by step">
+          <div className="workspace">
+            <div className="col col--panels">
+              <h2 className="col__title">What each roommate knows</h2>
+              <StepControls
+                step={round.step}
+                last={round.last}
+                event={round.event}
+                broadcast={broadcast}
+                onPrev={round.prev}
+                onNext={round.next}
+                onNextPhase={round.nextPhase}
+                onReset={round.reset}
+                onEnd={round.end}
+              />
+              <Panels views={round.views} roles={scenario.roles} />
+            </div>
+            <div className="col col--timeline">
+              <h2 className="col__title">Messages</h2>
+              <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
+            </div>
+          </div>
+          <h2 className="col__title">The 24 arrangements</h2>
+          <ArrangementGrid
+            highlight={shownArrangement}
+            caption={
+              shownArrangement === null
+                ? 'The picks add up to one of these 24 numbers. Step to the end of the round to see which.'
+                : `This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`
+            }
           />
-          <Panels views={round.views} roles={scenario.roles} />
         </section>
-
-        <section className="col col--timeline" aria-label="Messages">
-          <h2 className="col__title">Messages</h2>
-          <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
-        </section>
-
-        <section className="col col--results" aria-label="Fairness over many rounds">
-          <h2 className="col__title">{ROUNDS.toLocaleString()} rounds</h2>
+      ) : (
+        <section className="view view--sim" aria-label="Fairness over many rounds">
           <p className="headline" aria-live="polite">
-            {daveMaster === null ? (
-              <>Press <strong>Run</strong> to measure how often Dave gets the master bedroom.</>
+            {daveBest === null ? (
+              <>Measuring how often Dave gets {best}…</>
             ) : (
               <>
-                Dave gets the master bedroom <strong>{(daveMaster * 100).toFixed(1)}%</strong> of the time.
+                Dave gets {best} <strong>{(daveBest * 100).toFixed(1)}%</strong> of the time.
                 Fair would be <strong>25%</strong>.
                 {tally && tally.attempts > tally.rounds ? (
                   <> It took him <strong>{(tally.attempts / tally.rounds).toFixed(1)}</strong> tries per round.</>
                 ) : null}
               </>
             )}
+            {' '}
+            <button type="button" className="rerun" onClick={() => void run()} disabled={running}>
+              {running ? 'Running…' : 'Run again'}
+            </button>
           </p>
-          <FairnessChart tally={tally} total={ROUNDS} />
+          <div className="workspace workspace--sim">
+            <div className="col">
+              <h2 className="col__title">Who gets which room</h2>
+              <FairnessChart tally={tally} total={ROUNDS} />
+            </div>
+            <div className="col">
+              <h2 className="col__title">Which arrangements came up</h2>
+              <ArrangementGrid
+                weights={tally?.arrangementCounts}
+                caption="Fair play lights all 24 evenly. A cheater's rounds pile onto the six where he gets the suite."
+              />
+            </div>
+          </div>
         </section>
-      </div>
+      )}
     </main>
   );
 }

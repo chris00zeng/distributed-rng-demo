@@ -5,7 +5,7 @@
  * Tolerates fields added by later rungs (shares, reconstruction, exclusion).
  */
 import { PARTY_IDS, type PartyId, type PartyView } from '../protocol/types';
-import { name, phaseLabel, roomLabel, shortBytes, shortScalar } from './format';
+import { name, phaseLabel, roomLabel, shortBytes, shortScalar, totalLabel } from './format';
 
 export interface Fact {
   label: string;
@@ -66,7 +66,9 @@ export function panelFacts(view: PartyView, me: PartyId): Fact[] {
     facts.push({ label: 'Bad reveals', value: v.invalid.map(name).join(', '), kind: 'alert' });
   }
 
-  if (isScalar(v.combined)) facts.push({ label: 'Combined', value: shortScalar(v.combined), kind: 'public' });
+  if (isScalar(v.combined) && typeof v.arrangement === 'number') {
+    facts.push({ label: 'Total', value: totalLabel(v.combined, v.arrangement), kind: 'public' });
+  }
   if (v.assignment) {
     const a = v.assignment as Record<PartyId, string>;
     facts.push({ label: 'My room', value: roomLabel(a[me]), kind: 'self' });

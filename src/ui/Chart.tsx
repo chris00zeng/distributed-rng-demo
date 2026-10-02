@@ -1,13 +1,7 @@
-import { ROOMS, type Room } from '../crypto/shuffle';
+import { ROOMS } from '../crypto/arrangements';
+import { ROOM_INFO, ROOM_LABELS } from '../content/rooms';
 import { PARTY_IDS, PARTY_NAMES, type PartyId } from '../protocol/types';
 import { share, type Tally } from '../sim/simulate';
-
-const ROOM_LABELS: Record<Room, string> = {
-  master: 'Master w/ en-suite',
-  decent: 'Decent',
-  small: 'Small',
-  closet: 'Basically a closet',
-};
 
 const W = 640, H = 260, PAD_L = 44, PAD_R = 12, PAD_T = 16, PAD_B = 48;
 const PLOT_W = W - PAD_L - PAD_R, PLOT_H = H - PAD_T - PAD_B;
@@ -41,7 +35,8 @@ export function FairnessChart({ tally, total }: { tally: Tally | null; total: nu
                     y={y(frac)}
                     width={barW - 2}
                     height={PLOT_H * frac}
-                    className={`chart__bar chart__bar--${room}`}
+                    className="chart__bar"
+                    fill={ROOM_INFO[room].color}
                   >
                     <title>{`${PARTY_NAMES[p]} · ${ROOM_LABELS[room]}: ${(frac * 100).toFixed(1)}%`}</title>
                   </rect>
@@ -52,11 +47,11 @@ export function FairnessChart({ tally, total }: { tally: Tally | null; total: nu
           );
         })}
         <line x1={PAD_L} x2={W - PAD_R} y1={y(fair)} y2={y(fair)} className="chart__fair" />
-        <text x={W - PAD_R} y={y(fair) - 5} textAnchor="end" className="chart__fair-label">fair: 1/4</text>
+        <text x={W - PAD_R} y={y(fair) - 5} textAnchor="end" className="chart__fair-label">fair: 1 in 4</text>
       </svg>
       <figcaption className="chart__legend">
         {ROOMS.map((room) => (
-          <span key={room} className="legend__item"><i className={`legend__swatch chart__bar--${room}`} />{ROOM_LABELS[room]}</span>
+          <span key={room} className="legend__item"><i className="legend__swatch" style={{ background: ROOM_INFO[room].color }} />{ROOM_LABELS[room]}</span>
         ))}
         <span className="legend__status">
           {tally ? `${done.toLocaleString()} of ${total.toLocaleString()} rounds${tally.stuck ? `, ${tally.stuck} stuck` : ''}` : 'not run yet'}

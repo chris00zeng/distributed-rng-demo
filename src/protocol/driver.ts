@@ -6,7 +6,8 @@
  * Invariant when recording: `views[i]` is every party's view *after* `events[i]`.
  */
 import { deriveSeed, makePrng } from '../crypto/prng';
-import type { Room } from '../crypto/shuffle';
+import { indexOfArrangement, type Room } from '../crypto/arrangements';
+import { PARTY_IDS as IDS } from './types';
 import { Bus } from './bus';
 import { createParty } from './parties';
 import {
@@ -42,7 +43,8 @@ export function runRound(scenario: Scenario, opts: RunOptions = {}): { log: Roun
     const { outcome, final } = runAttempt(scenario, attempt, events, views, record);
     if (outcome.kind === 'assigned') {
       terminal({ kind: 'outcome', assignment: outcome.assignment }, final);
-      return { log, result: { outcome: 'assigned', assignment: outcome.assignment, attempts: attempt } };
+      const k = indexOfArrangement(IDS.map((p) => outcome.assignment[p]));
+      return { log, result: { outcome: 'assigned', assignment: outcome.assignment, arrangement: k, attempts: attempt } };
     }
     if (outcome.kind === 'stuck') {
       terminal({ kind: 'stuck', reason: outcome.reason }, final);

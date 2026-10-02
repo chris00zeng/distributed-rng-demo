@@ -1,8 +1,8 @@
-/** Rung 2: commit to a hash first, reveal after everyone has committed. */
+/** Rung 2: commit to a hash of your pick first, reveal after everyone has committed. */
 import { commit, makeNonce, open } from '../../crypto/commit';
-import { add, sampleScalar, type Scalar } from '../../crypto/field';
+import { arrangement, combine, samplePick } from '../../crypto/arrangements';
+import type { Scalar } from '../../crypto/field';
 import { PARTY_IDS, type Ctx, type Envelope, type PartyId, type Role } from '../types';
-import { assignRooms } from '../../crypto/shuffle';
 import { BaseParty } from './base';
 
 export class CommitRevealParty extends BaseParty {
@@ -13,7 +13,7 @@ export class CommitRevealParty extends BaseParty {
   }
 
   onStart(ctx: Ctx): void {
-    const value = sampleScalar(ctx.rng);
+    const value = samplePick(ctx.rng);
     const nonce = makeNonce(ctx.rng);
     this.state.myValue = value;
     this.state.myNonce = nonce;
@@ -66,7 +66,7 @@ export class CommitRevealParty extends BaseParty {
 
   protected othersSum(): Scalar {
     let s: Scalar = 0n;
-    for (const p of PARTY_IDS) if (p !== this.id) s = add(s, this.state.revealed[p] ?? 0n);
+    for (const p of PARTY_IDS) if (p !== this.id) s += this.state.revealed[p] ?? 0n;
     return s;
   }
 }
@@ -87,7 +87,7 @@ export class AborterCommitRevealParty extends CommitRevealParty {
       return;
     }
     if (this.count(this.state.revealed) < PARTY_IDS.length - 1) return;
-    const outcome = assignRooms(add(this.othersSum(), this.state.myValue!));
+    const outcome = arrangement(combine([this.othersSum(), this.state.myValue!]));
     if (outcome[this.id] === 'master') {
       this.reveal(ctx);
     } else {

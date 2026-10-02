@@ -1,5 +1,6 @@
-/** Rung 1: everyone announces a number; the sum decides. */
-import { add, sampleScalar, type Scalar } from '../../crypto/field';
+/** Rung 1: everyone announces a pick from 0 to 23; the total mod 24 decides. */
+import { samplePick } from '../../crypto/arrangements';
+import type { Scalar } from '../../crypto/field';
 import { PARTY_IDS, type Ctx, type Envelope, type PartyId, type Role } from '../types';
 import { steerContribution } from '../steer';
 import { BaseParty } from './base';
@@ -17,7 +18,7 @@ export class AnnounceParty extends BaseParty {
   }
 
   onStart(ctx: Ctx): void {
-    this.announce(ctx, sampleScalar(ctx.rng));
+    this.announce(ctx, samplePick(ctx.rng));
   }
 
   onMessage(env: Envelope, _ctx: Ctx): void {
@@ -55,8 +56,8 @@ export class LastMoverAnnounceParty extends AnnounceParty {
 
   private strike(ctx: Ctx): void {
     let others: Scalar = 0n;
-    for (const p of PARTY_IDS) if (p !== this.id) others = add(others, this.state.announced[p] ?? 0n);
-    this.announce(ctx, steerContribution(ctx.rng, others, this.id));
+    for (const p of PARTY_IDS) if (p !== this.id) others += this.state.announced[p] ?? 0n;
+    this.announce(ctx, steerContribution(others, this.id));
   }
 }
 

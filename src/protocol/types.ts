@@ -4,7 +4,7 @@
  */
 import type { Scalar } from '../crypto/field';
 import type { Prng } from '../crypto/prng';
-import type { Room } from '../crypto/shuffle';
+import type { Room } from '../crypto/arrangements';
 
 export type PartyId = 0 | 1 | 2 | 3;
 export const PARTY_IDS: readonly PartyId[] = [0, 1, 2, 3];
@@ -70,7 +70,10 @@ export interface PartyView {
   reconstructed: Partial<Record<PartyId, Scalar>>;
   /** Parties left out of the round because they went silent before dealing. */
   excluded: PartyId[];
+  /** Integer total of the contributions this party combined. */
   combined?: Scalar;
+  /** The arrangement number: combined mod 24. */
+  arrangement?: number;
   assignment?: Record<PartyId, Room>;
   /** Short note for the panel, e.g. "waiting for the others to reveal". */
   note?: string;
@@ -123,6 +126,7 @@ export interface RoundLog {
 export interface RoundResult {
   outcome: 'assigned' | 'stuck';
   assignment?: Record<PartyId, Room>;
+  arrangement?: number;
   attempts: number;
   reason?: string;
 }

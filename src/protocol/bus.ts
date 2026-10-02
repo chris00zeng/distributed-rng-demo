@@ -3,8 +3,7 @@
  * for a seed: envelopes are ordered by (per-round rank of the sender, seq).
  * A dropped party's outbound messages are discarded.
  */
-import { fisherYates } from '../crypto/shuffle';
-import type { Prng } from '../crypto/prng';
+import { shuffle, type Prng } from '../crypto/prng';
 import { PARTY_IDS, type Envelope, type Msg, type PartyId } from './types';
 
 export class Bus {
@@ -14,7 +13,7 @@ export class Bus {
   private rank: Record<PartyId, number>;
 
   constructor(rng: Prng) {
-    const order = fisherYates(PARTY_IDS, () => rng.u32());
+    const order = shuffle(PARTY_IDS, rng);
     this.rank = { 0: 0, 1: 0, 2: 0, 3: 0 };
     order.forEach((p, i) => { this.rank[p] = i; });
   }

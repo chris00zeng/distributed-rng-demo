@@ -18,9 +18,9 @@
  * but its share envelopes are already in flight and still arrive: a phone that
  * dies after sending has still sent.
  */
+import { arrangement, combine, samplePick } from '../../crypto/arrangements';
 import { commit, makeNonce, open } from '../../crypto/commit';
-import { add, sampleScalar, type Scalar } from '../../crypto/field';
-import { assignRooms } from '../../crypto/shuffle';
+import type { Scalar } from '../../crypto/field';
 import { deal, lowestT, reconstruct, type Share } from '../../crypto/shamir';
 import { PARTY_IDS, type Ctx, type Envelope, type PartyId, type Role } from '../types';
 import { BaseParty } from './base';
@@ -44,7 +44,8 @@ export class SharedParty extends BaseParty {
   // ---- commit ----
 
   onStart(ctx: Ctx): void {
-    const value = sampleScalar(ctx.rng);
+    // Rungs 3 and 4: a bare pick. Padding (D23) arrives with Feldman in PR8.
+    const value = samplePick(ctx.rng);
     const nonce = makeNonce(ctx.rng);
     this.state.myValue = value;
     this.state.myNonce = nonce;
@@ -173,13 +174,13 @@ export class SharedParty extends BaseParty {
     if (this.state.phase !== 'reveal' && this.state.phase !== 'reconstruct') return;
     if (this.missing().length > 0) return;
     let s: Scalar = 0n;
-    for (const p of this.active()) s = add(s, this.knownValue(p)!);
+    for (const p of this.active()) s += this.knownValue(p)!;
     this.finishWith(s);
   }
 
   protected othersSum(): Scalar {
     let s: Scalar = 0n;
-    for (const p of this.active()) if (p !== this.id) s = add(s, this.knownValue(p) ?? 0n);
+    for (const p of this.active()) if (p !== this.id) s += this.knownValue(p) ?? 0n;
     return s;
   }
 
@@ -270,7 +271,7 @@ export class AborterSharedParty extends SharedParty {
     }
     const othersKnown = this.active().filter((p) => p !== this.id && this.knownValue(p) !== undefined).length;
     if (othersKnown < this.active().length - 1) return;
-    const outcome = assignRooms(add(this.othersSum(), this.state.myValue!));
+    const outcome = arrangement(combine([this.othersSum(), this.state.myValue!]));
     if (outcome[this.id] === 'master') {
       this.reveal(ctx);
     } else {

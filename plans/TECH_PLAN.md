@@ -197,12 +197,22 @@ The ladder UI never builds a `Scenario` by hand: it calls the rung's preset with
 
 ### Combination and room assignment (all rungs)
 
+**Superseded on 2026-10-02 by D21 (below). Kept for the record.**
+
 1. Each party *i* contributes `s_i ∈ Z_ℓ`. Combined value `S = Σ s_i mod ℓ` over the parties that remain (disqualified dealers excluded).
 2. `seed = SHA-256(S as 32 bytes)`. A byte stream is `SHA-256(seed ‖ counter)` for counter 0, 1, 2…
 3. Fisher–Yates over the four rooms. For each step needing a uniform index in `[0, k)`, read 32-bit words from the stream and **reject** any word ≥ `floor(2³² / k) · k`. No modulo bias.
 4. Room list order is [master, decent, small, closet]; party *i* gets permutation[*i*].
 
 Rung 1's "announce and sum" is literally this with announced `s_i`. Rung 0 is Dave announcing `S` directly.
+
+### Arrangements and picks (D21, replaces the shuffle)
+
+- `ARRANGEMENTS`: the 24 permutations of the four rooms in lexicographic order; `arrangement(k)` gives party *i* room `ARRANGEMENTS[k][i]`. Exactly 6 of the 24 give any one party the Royal Suite.
+- Rungs 0 to 4: a contribution is a **pick** `p ∈ {0..23}`, drawn with `rng.below(24)`, carried as a `Scalar` (`0n..23n`). Combination `k = (Σ picks) mod 24` over integers, not mod ℓ.
+- Rungs 5 and 6 (Feldman on): the dealt secret is `s = p + 24·r` with `r` uniform in `[0, 2^240)`, so `s < 2^245` and any sum of four secrets stays below ℓ ≈ 2^252 (no wraparound). The pick is `s mod 24`; combination is `(Σ s_i) mod 24` over integers. Without padding `C_0 = p·G` is brute-forceable in 24 guesses. The UI renders `s` as the pick plus a visibly distinct padding block.
+- Shamir shares are of `s` (small on rungs 3 and 4, padded on 5 and 6) in Z_ℓ as before; reconstruction returns `s` exactly.
+- Steering (D22): a cheater who knows the others' total `T` and wants the Royal Suite picks any `p` with `(T + p) mod 24 ∈ W`, where `W` is the set of 6 winning arrangement indices for them; no search.
 
 ### Shamir (rungs 3 to 6)
 
@@ -231,7 +241,21 @@ Hiding is computational (discrete log). Pedersen commitments `a_j·G + b_j·H` w
 | 3 to 6 | Any party, *before* dealing finishes | Party is excluded; round proceeds with the rest (nothing was learned). |
 | 6 | Enough parties that fewer than *t* shares exist for a silent dealer | `stuck`: liveness failure, counted separately in the tally. |
 
-### Dave's strategies
+### Decision points and policies (D24, replaces subclass strategies)
+
+Every protocol party is the **honest** implementation. At each point where a party could deviate, it calls `ctx.decide(point)` and receives an option. A `Policy = (point: DecisionPoint) => option` per party is derived from its `Role`; `honest` always returns the honest option. The driver logs a `decision` event `{ by, point, options, chosen, deviates }` so the timeline can label and highlight it, and `RunOptions.overrides` (a map from decision index to option) lets the UI replace any decision and replay the round from the same seed. Decision points by protocol:
+
+| Protocol | Point | Options (honest first) |
+|---|---|---|
+| trusted (dealer) | `roll` | random pick · a pick that wins |
+| announce | `speak` at start | announce now · wait to speak last; then `steer`: a pick that wins |
+| commitReveal | `reveal` after all others revealed | reveal · quit |
+| shared (verify off) | `deal` | consistent shares · inconsistent shares (rung 4); `reveal`: reveal · quit; `reconstruct` for a dead dealer: true share · forged share (rung 4) |
+| shared (verify on) | same points; the protocol's checks defeat the dishonest options | |
+
+The role table in "One protocol family" is unchanged: a role is now the name of a policy.
+
+### Dave's strategies (superseded by D24; kept for the record)
 
 | Strategy | Hook | Behaviour |
 |---|---|---|
@@ -281,18 +305,22 @@ The bus holds a queue. `deliverNext` picks the next envelope by `(from-party ord
 | D5 | One field Z_ℓ for all share arithmetic, including rungs 3 and 4 (new) | Separate small prime for plain Shamir | One `field` module, one Shamir, Feldman drops in. Rung 3 → 5 is "add verification", not "swap fields". | Active |
 | D6 | @noble/hashes SHA-256, synchronous (new; replaces PLAN.md WebCrypto) | WebCrypto | Keeps the driver synchronous and deterministic; identical in tests. | Active |
 | D7 | Seeded PRNG for all demo randomness (PLAN.md: seeded, deterministic) | `crypto.getRandomValues` | Reproducible runs and shareable URLs (R13). UI states that a real deployment would use OS randomness. | Active |
-| D8 | Combine by sum mod ℓ, then SHA-256-seeded Fisher–Yates with rejection sampling (PLAN.md: XOR or hash; rejection sampling) | XOR of byte strings | Sum in the field is what Shamir reconstructs naturally; the shuffle seed is a hash of it. | Active |
+| D8 | Combine by sum mod ℓ, then SHA-256-seeded Fisher–Yates with rejection sampling (PLAN.md: XOR or hash; rejection sampling) | XOR of byte strings | Sum in the field is what Shamir reconstructs naturally; the shuffle seed is a hash of it. | Superseded by D21 |
 | D9 | Message bus is the only inter-party seam (PLAN.md) | Direct method calls | Step-through, drops and a future relay all hang off one interface. | Active |
 | D10 | Rungs 3 to 6 are one protocol with `verify` and `t` flags (new) | One module per rung | Fewer code paths; makes "same protocol, harder attack" literally true. | Active |
 | D11 | Naive reconstruction uses lowest-indexed *t* shares (new) | Check all shares, abort on inconsistency | Textbook behaviour; makes rung 4 real. Objection addressed in copy and rationale. | Active |
 | D12 | Rung 2 abort → restart, unlimited, capped at 64 (PRD) | One abort per round | PRD decision; cap is a safety valve only. | Active |
-| D13 | Simulation chunked on the main thread with progressive chart (new) | Web Worker | Simpler build; no serialisation. Switch to a Worker only if rung 5 misses its budget. | Active |
+| D13 | Simulation chunked on the main thread with progressive chart (new); chunks yield via `scheduler.yield` or a MessageChannel hop, never `setTimeout` | Web Worker | Simpler build; no serialisation. Switch to a Worker only if rung 5 misses its budget. Timer-based yields are throttled to 1 s in background tabs. | Active |
 | D14 | Complaint → dealer publishes share or is disqualified; contribution excluded (PLAN.md) | Abort the round | Disqualification is free before any reveal. | Active |
 | D15 | Vitest for unit, property and statistical tests (new) | Jest; none | Native to Vite. Statistical tests are how R5 is proven. | Active |
 | D17 | Timeline steps one message at a time, with phase markers and a "next phase" button (new) | Per-phase stepping only | Dropouts and complaints only read at message granularity; the shortcut keeps long phases quick. | Active |
-| D18 | Rung 0/1 cheats find a winning value by random search over candidates (new) | Back-solve from a chosen room | Honest about how the attack works; expected 4 tries, negligible cost. | Active |
+| D18 | Rung 0/1 cheats find a winning value by random search over candidates (new) | Back-solve from a chosen room | Honest about how the attack works; expected 4 tries, negligible cost. | Superseded by D22 |
 | D16 | App state in the query string: `?rung=2&roles=hhha&seed=…[&t=3][&drop=1]`, roles as one letter per roommate (h/l/m/a/b/f/c), params equal to defaults omitted, invalid values fall back to defaults (PLAN.md: shareable by URL) | Hash fragment; localStorage | Plain, copyable, GitHub Pages friendly. The ladder keys off the rung preset, so `rung=` replaces the earlier `p=`/`v=` protocol sketch; `t` and `drop` are reserved for the Sandbox. Pinned tallies are not in the URL. | Active |
 | D19 | `Scenario` carries a `ProtocolConfig` and a role per roommate from day one; the ladder uses presets (new, for R23) | Dave-only role, refactor later | Makes the Sandbox UI-only work and costs nothing now. | Active |
+| D21 | Picks are 0 to 23; combination is the integer sum mod 24 indexing a fixed table of 24 arrangements (user feedback) | Keep the field-element + hashed shuffle | One mental model for the viewer: add the picks, wrap at 24, look up the arrangement. The shuffle and rejection sampling were a second layer of indirection that explained nothing. | Active |
+| D22 | Cheats compute a winning pick directly from the others' total (user feedback) | Random search (D18) | With 24 arrangements the winning set is explicit; "Dave just does the arithmetic" is the honest description. | Active |
+| D23 | Padding `s = p + 24·r`, `r < 2^240`, introduced at rung 5 only, rendered visibly distinct (user decision) | Pad from rung 3; keep big secrets everywhere | Only the Feldman commitment leaks a small pick; introducing padding where it is needed teaches why. Bound on `r` keeps integer sums below ℓ. | Active |
+| D24 | Honest parties call `ctx.decide(point)`; roles are policies; the driver logs `decision` events and accepts per-decision overrides for replay (user feedback) | Strategy subclasses (PR3) | Makes deviations explicit in the timeline, lets the user play Dave's move, and is the Sandbox-ready shape. Replay from the same seed is cheap. | Active |
 | D20 | Multi-cheater combinations are not special-cased; the engine runs the mechanics and the Sandbox reports `stuck` and "no effect" cases plainly (new) | Forbid all but single-cheater configs | Measured answers to odd questions are the Sandbox's point; forbidding hides them. | Active |
 
 ## Correctness & verification
@@ -331,6 +359,8 @@ None open. Resolved 2026-10-02:
 - **Rung 0 and 1 steering:** `liar` and `lastMover` search random candidate values until the permutation gives Dave the master room, expected 4 tries (D18).
 
 ## Changelog
+- 2026-10-02: D13 refined: chunk yield uses `scheduler.yield`/MessageChannel (PR15).
+- 2026-10-02: Polish pass: D8 and D18 superseded by D21 (picks 0 to 23, sum mod 24, arrangement table) and D22 (direct steering); D23 padding at rung 5; D24 decision points and policies replacing subclass strategies, with `decision` events and replay overrides. New "Arrangements and picks" and "Decision points" sections.
 - 2026-10-02: Initial draft from the approved PRD and the implementation notes in PLAN.md. New decisions D2, D5, D6, D10, D11, D13, D15 are flagged as such; D6 replaces PLAN.md's WebCrypto with @noble/hashes.
 - 2026-10-02: Resolved T1 and T2 as D17 and D18 (user approved the recommendations).
 - 2026-10-02: PR5: `Ctx.dropout()` added beside `abort()` (same mechanics, labelled `cause: 'dropout'` on the abort event) and `Bus.drop` now keeps already-queued envelopes in flight, so a party that dies right after dealing has still dealt. Dropout fault injection is party-side: the `scenario.dropout` party calls `ctx.dropout()` after sending its shares. Phases gained `deal` and `reconstruct`. Interface refinements only; D11/D14 unchanged.

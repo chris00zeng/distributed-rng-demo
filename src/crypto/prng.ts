@@ -84,6 +84,16 @@ export function makePrng(seed: string): Prng {
   };
 }
 
+/** Fisher–Yates with rejection-sampled indices from a Prng. Returns a new array. */
+export function shuffle<T>(items: readonly T[], rng: Prng): T[] {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = rng.below(i + 1);
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
 /**
  * Derive a child seed: `sha256(seed ‖ label)` as hex. Round k of a simulation
  * uses `deriveSeed(scenario.seed, k)` (Technical Plan, Deterministic ordering).
