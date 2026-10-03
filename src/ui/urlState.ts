@@ -1,7 +1,7 @@
 /**
  * The app's state in the query string (PRD R13, Technical Plan D16):
  *   ?rung=2&roles=hhha&seed=roommates[&t=3][&drop=1]
- * `roles` is one letter per roommate in order You, Ana, Ben, Dave. Params
+ * `roles` is one letter per roommate in order Zoe, Ana, Ben, Dave. Params
  * equal to their defaults are omitted. Garbage falls back to defaults, and a
  * role the rung's protocol does not offer falls back to honest. `t` and
  * `drop` round-trip for the later Sandbox even though the ladder UI does not

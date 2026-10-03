@@ -8,7 +8,7 @@ import type { Room } from '../crypto/arrangements';
 
 export type PartyId = 0 | 1 | 2 | 3;
 export const PARTY_IDS: readonly PartyId[] = [0, 1, 2, 3];
-export const PARTY_NAMES: Readonly<Record<PartyId, string>> = { 0: 'You', 1: 'Ana', 2: 'Ben', 3: 'Dave' };
+export const PARTY_NAMES: Readonly<Record<PartyId, string>> = { 0: 'Zoe', 1: 'Ana', 2: 'Ben', 3: 'Dave' };
 export const DAVE: PartyId = 3;
 export const N_PARTIES = 4;
 

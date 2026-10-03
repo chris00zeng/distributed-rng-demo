@@ -44,7 +44,7 @@ export interface Polynomial {
   intercept?: number;
   /** Metaphorical slope so all points land on one straight line. */
   slope: number;
-  /** Has the secret become public to the honest observer (party 0): revealed or rebuilt? */
+  /** Has the secret become public to the honest observer (party 0, Zoe): revealed or rebuilt? */
   publicTo0: 'no' | 'revealed' | 'reconstructed';
 }
 

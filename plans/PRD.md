@@ -31,7 +31,7 @@ The thesis: *fair randomness among mutually distrusting parties is a distributed
 
 ## The attack ladder
 
-The cast is four roommates: **You**, **Ana**, **Ben** and **Dave**. Dave is the designated cheater. The rooms, from best to worst, are **The Royal Suite** (en-suite, balcony, heated floors, a chandelier nobody asked for), **The Decent One** (has a door that closes), **The Shoebox** (the bed fits, technically) and **Basically a Closet** (it is a closet). Each round, the roommates run one protocol to produce a shared random value, which fixes the room assignment. A fair protocol gives every roommate each room 1/4 of the time.
+The cast is four roommates: **Zoe**, **Ana**, **Ben** and **Dave**. Dave is the designated cheater. The rooms, from best to worst, are **The Royal Suite** (en-suite, balcony, heated floors, a chandelier nobody asked for), **The Decent One** (has a door that closes), **The Shoebox** (the bed fits, technically) and **Basically a Closet** (it is a closet). Each round, the roommates run one protocol to produce a shared random value, which fixes the room assignment. A fair protocol gives every roommate each room 1/4 of the time.
 
 **How picks become rooms.** There are exactly 24 ways to assign four rooms to four roommates, numbered 0 to 23 and shown as a grid of room-coloured chips, one chip per roommate. Each roommate picks a number from 0 to 23. The picks are added up and wrapped around at 24, and the result is the arrangement number. If even one roommate's pick is uniformly random and independent of the others, the sum is uniformly random too. That is the whole trick, and every rung is about protecting that one assumption.
 
@@ -90,7 +90,7 @@ Priorities: **P0** must ship, **P1** should ship, **P2** stretch.
 
 | ID | Requirement | Priority | Acceptance criteria | Source |
 |----|-------------|----------|---------------------|--------|
-| R6 | **Per-roommate panels** (You, Ana, Ben, Dave) each show only what that roommate knows at the current step. | P0 | At a commit step, a panel shows its own value and others' commitments only. At rung 3 after dealing, a panel shows the shares it holds, not the secrets. Panels never leak information the protocol has not revealed to that roommate. | User decision |
+| R6 | **Per-roommate panels** (Zoe, Ana, Ben, Dave) each show only what that roommate knows at the current step. | P0 | At a commit step, a panel shows its own value and others' commitments only. At rung 3 after dealing, a panel shows the shares it holds, not the secrets. Panels never leak information the protocol has not revealed to that roommate. | User decision |
 | R7 | **Message timeline** with step-through. | P0 | A sequence-style view lists messages between roommates in order. Next / previous / reset work. A dropout appears as a missing message followed by the recovery messages. | User decision |
 | R8 | **Cheater role picker** for Dave. Roles: honest, last mover, aborter (P0); bad dealer, fake-share submitter (P1); colluder with a second roommate (P2, with R4b). | P0 / P1 / P2 | Only roles meaningful for the current rung are offered. Switching role and re-running changes the timeline and the chart. | User decision |
 | R9 | **"Run 1,000 rounds"** produces a bar chart of room frequency per roommate against the fair 1/*n* line, available on every rung, plus the 24-arrangement grid shaded by how often each arrangement came up. | P0 | The chart appears in under 2 seconds, shows four roommates and the 1/*n* line, and the Royal Suite frequency is the headline number. | User decision |
@@ -123,7 +123,7 @@ Priorities: **P0** must ship, **P1** should ship, **P2** stretch.
 - **Layout.** Top: intro story with the floorplan (collapsible), then ladder navigation (rungs 0 to 6, then Sandbox; locked beyond what is built), then the rung copy and Dave's role picker. Below, one view at a time (R26): *Step through one round* shows the four roommate panels beside the message timeline with step controls and the highlighted arrangement; *Run 1,000 rounds* shows the headline, the bar chart and the arrangement grid. Rungs 3 to 5 add the polynomial visual to the step view; rung 6 adds the *t* slider and phase chart.
 - **Narrative beats.** The intro sets the scene and ends on "so how do four people who don't trust each other roll one die?". Rung 0 is the punchline-first opener (Dave wins 100%). Rung 2 is the "surely this is fixed" moment that is not: the chart looks exactly like rung 0. Rung 3 is the core insight, stated in one sentence on screen. Rung 4 is the twist. Rung 5 is the payoff. Rung 6 is the closing wall: *you do not fix this, you choose t.* The Sandbox is the epilogue: *now try to break it yourself.*
 - **Tone.** Playful and concrete (roommates, closets, dead phones), never jokey about the math. Plain words by default; the math toggle is for the curious.
-- **Dave.** Dave is the designated cheater. The user is the honest roommate "You": they set Dave's default strategy with the role picker and watch the round from their own panel, seeing only what an honest participant would see. In step-through they may also reach over and make Dave's move at any decision point (R27), which is how they discover for themselves that quitting on rung 3 changes nothing.
+- **Dave.** Dave is the designated cheater. The user is an observer, not a roommate: they set Dave's default strategy with the role picker and watch the round from the outside. Zoe (party 0) is the honest roommate whose point of view decides when a secret counts as public. In step-through they may also reach over and make Dave's move at any decision point (R27), which is how they discover for themselves that quitting on rung 3 changes nothing.
 
 ## Success criteria
 
@@ -166,7 +166,7 @@ None open. Resolved 2026-10-02:
 - **Rung 6 priority:** split into R4a (explainer, P1) and R4b (live collusion, P2).
 - **Abort model:** Dave may abort and restart as often as he likes on rung 2, so the attack yields 100%. On rung 4 the abort ends the round, so the two-choice bias is 7/16.
 - **Real multiplayer:** non-goal, rationale extension only.
-- **Who is the user:** the honest roommate "You", steering Dave through the role picker.
+- **Who is the user:** an outside observer steering Dave through the role picker; no roommate is "you".
 - **Hosting:** left to the Technical Plan.
 - **Sandbox:** added as R23 at P2, absorbing R4b. The engine carries a role per roommate from the start so the Sandbox is UI-only work later.
 
@@ -189,6 +189,7 @@ None open. Resolved 2026-10-02:
 
 ## Changelog
 - 2026-10-02: Rung 4 outcome corrected from ≈44% to 100%: with the realistic reconstruction rule (use every share, void the round if they disagree) the honest roommates can detect but not attribute a lie, so one bad dealer or one forged share turns "quit" back into "restart". The 44% figure assumed a rule under which the fake-share attack was impossible (Dave's share, index 4, was never among the lowest two). Proposed in PR7; see Technical Plan D25.
+- 2026-10-02: Dropped the second-person roommate. Party 0 is now Zoe; the user watches from outside rather than playing a roommate (user request).
 - 2026-10-02: R25 arrangement grid revised from mini floorplans with initials to room-coloured chips sized by room, with a per-roommate hover that highlights their Royal Suite wins (user request).
 - 2026-10-02: Polish pass from user feedback: picks are 0 to 23 summed mod 24 into a fixed table of 24 arrangements (replaces the seeded shuffle); padding introduced at rung 5 and drawn distinctly; rooms renamed (Royal Suite, Decent One, Shoebox, Basically a Closet); new R24 intro story, R25 floorplan, R26 one view at a time, R27 Dave's decisions overridable. Scope table and cut order updated; Sandbox now likely cut.
 - 2026-10-02: Initial draft from requirements.pdf and PLAN.md.

@@ -30,7 +30,7 @@ A static single-page app. Four simulated parties run one of a small family of ra
                  │ Bus (simulated, seeded order, drops)             │
                  └──┬──────────┬──────────┬──────────┬─────────────┘
                  ┌──┴──┐    ┌──┴──┐    ┌──┴──┐    ┌──┴──────────┐
-                 │ You │    │ Ana │    │ Ben │    │ Dave        │
+                 │ Zoe │    │ Ana │    │ Ben │    │ Dave        │
                  │honest    │honest   │honest   │ + Strategy   │
                  └──┬──┘    └──┬──┘    └──┬──┘    └──┬──────────┘
                     └──────────┴──────────┴──────────┘
@@ -95,7 +95,7 @@ Rungs 3, 4, 5 and 6 are the **same protocol** with two flags: `verify` (Feldman 
 ## Data model & interfaces
 
 ```ts
-type PartyId = 0 | 1 | 2 | 3;            // You, Ana, Ben, Dave
+type PartyId = 0 | 1 | 2 | 3;            // Zoe, Ana, Ben, Dave
 type Rung = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type Room = 'master' | 'decent' | 'small' | 'closet';
 type Role = 'honest' | 'liar' | 'lastMover' | 'aborter' | 'badDealer' | 'fakeShare' | 'colluder';
