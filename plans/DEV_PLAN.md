@@ -116,6 +116,13 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; on rung 2 make an honest Dave quit and watch the restart; on rung 3 make him quit and watch it change nothing.
 - **Estimate:** 60 min · **Actual:** 25 min
 
+### PR18 — Stage view: cards at four corners, arrows per message, change flash, auto-play  `[x]`
+- **Goal:** Make the step-through something you watch: who is talking to whom, what each roommate just learned.
+- **Covers:** R6, R7 · D2, D17
+- **Scope:** `ui/Stage` places the four `RoommateCard`s (refactored out of `Panels`) at the corners of a 2×2 grid with an SVG overlay; the current logical message is drawn as a line per recipient (delivered solid with a travelling dot, pending dashed), broadcasts fan out, the centre shows the phase, the event in words and the result once known; abort/void/stuck/drop/start become a centred banner; a dropped roommate's card dims; the deciding card is outlined. `ui/panelDiff` flags facts that changed since the previous step; cards flash them (`fact--changed`) and a changed note. `ui/useAutoplay`: play/pause with 0.5/1/2 s per step, pauses by itself at Dave's decision, stops at the end, Space toggles. The sequence-diagram timeline moves under a collapsed "Message history". Phone width: cards stack, overlay hidden. `prefers-reduced-motion` respected.
+- **Verify:** Level 2, Dave quitting: arrows follow each message and the reveal fans out as three; changed facts flash; auto-play started two steps before Dave's decision stops exactly on it with his move box showing.
+- **Estimate:** 110 min · **Actual:** 45 min
+
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
 - **Covers:** R18, R19 (draft), R22
@@ -219,6 +226,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
 | PR16 | 60 min | 25 min | Roles are policies; decision events logged after their trigger; Dave-only move box |
+| PR18 | 110 min | 45 min | Stage with corner cards and per-message arrows; change flash; auto-play pauses at Dave's move |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR14 | 30 min | — | |
@@ -238,6 +246,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR18 done (user feedback items 3, 4, 5). Stage view replaces the two-column panels/timeline layout in the step view; the timeline survives as collapsed history.
 - 2026-10-02: PR10 done. The ladder now ends on the limit: a t slider, the t-versus-f phase chart, and a live liveness failure (t = 4, Dave quits: he wins or nobody gets a room). Rung 6 offers only honest and quitter roles; the colluder role waits for the Sandbox, which is cut.
 - 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.

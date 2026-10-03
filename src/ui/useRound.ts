@@ -54,6 +54,8 @@ export function useRound(scenario: Scenario) {
     last,
     event: log.events[clamped]!,
     views: log.views[clamped]!,
+    /** The views one step earlier, for change highlighting; undefined at the first step. */
+    prevViews: clamped > 0 ? log.views[clamped - 1] : undefined,
     setStep, next, prev, reset, end, nextPhase,
     overrides, override, clearOverrides,
   };

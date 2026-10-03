@@ -12,8 +12,9 @@ import { FairnessChart } from './ui/Chart';
 import { Intro } from './ui/Intro';
 import { MathToggle, useMathToggle } from './ui/MathToggle';
 import { PolynomialVisual } from './ui/PolynomialVisual';
-import { Panels } from './ui/Panels';
+import { Stage } from './ui/Stage';
 import { StepControls } from './ui/StepControls';
+import { useAutoplay } from './ui/useAutoplay';
 import { Timeline, buildRows } from './ui/Timeline';
 import { useRound } from './ui/useRound';
 import { ROUNDS, useSimulation } from './ui/useSimulation';
@@ -72,6 +73,13 @@ export function App() {
     return set;
   }, [round.log, round.step]);
   const hasOverrides = Object.keys(round.overrides).length > 0;
+  const autoplay = useAutoplay({
+    step: round.step,
+    last: round.last,
+    next: round.next,
+    holdHere: currentDecision !== undefined && currentDecision.by === DAVE,
+    resetKey: round.log,
+  });
   const shownArrangement = outcomeStep >= 0 && round.step >= outcomeStep ? (round.result.arrangement ?? null) : null;
 
   // Entering the simulation view with no result yet starts the run (R26).
@@ -174,39 +182,44 @@ export function App() {
 
       {view === 'step' ? (
         <section className="view view--step" aria-label="One round, step by step">
-          <div className="workspace">
-            <div className="col col--panels">
-              <h2 className="col__title">What each roommate knows</h2>
-              <StepControls
-                step={round.step}
-                last={round.last}
-                event={round.event}
-                broadcast={broadcast}
-                onPrev={round.prev}
-                onNext={round.next}
-                onNextPhase={round.nextPhase}
-                onReset={round.reset}
-                onEnd={round.end}
-              />
-              {hasOverrides ? (
-                <p className="overrides">
-                  You are playing {PARTY_NAMES[DAVE]}'s moves.{' '}
-                  <button type="button" className="rerun" onClick={round.clearOverrides}>Reset to his usual play</button>
-                </p>
-              ) : null}
-              <Panels
-                views={round.views}
-                roles={scenario.roles}
-                decision={currentDecision}
-                deviated={deviated}
-                onOverride={round.override}
-              />
-            </div>
-            <div className="col col--timeline">
-              <h2 className="col__title">Messages</h2>
-              <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
-            </div>
-          </div>
+          <h2 className="col__title">One round, message by message</h2>
+          <StepControls
+            step={round.step}
+            last={round.last}
+            event={round.event}
+            broadcast={broadcast}
+            onPrev={round.prev}
+            onNext={round.next}
+            onNextPhase={round.nextPhase}
+            onReset={round.reset}
+            onEnd={round.end}
+            autoplay={autoplay}
+          />
+          {hasOverrides ? (
+            <p className="overrides">
+              You are playing {PARTY_NAMES[DAVE]}'s moves.{' '}
+              <button type="button" className="rerun" onClick={round.clearOverrides}>Reset to his usual play</button>
+            </p>
+          ) : null}
+          <Stage
+            events={round.log.events}
+            step={round.step}
+            views={round.views}
+            prevViews={round.prevViews}
+            roles={scenario.roles}
+            decision={currentDecision}
+            deviated={deviated}
+            onOverride={round.override}
+            resultLine={
+              shownArrangement === null
+                ? null
+                : `Arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`
+            }
+          />
+          <details className="history">
+            <summary className="history__summary">Message history</summary>
+            <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
+          </details>
           {scenario.protocol.kind === 'shared' ? <PolynomialVisual views={round.views} showMath={showMath} /> : null}
           <h2 className="col__title">The 24 arrangements</h2>
           <ArrangementGrid
