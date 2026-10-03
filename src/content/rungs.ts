@@ -85,5 +85,14 @@ export const RUNGS: readonly RungCopy[] = [
     attackRole: 'badDealer',
     available: true,
   },
-  { id: 6, title: 'The threshold limit', protocol: '', attack: '', outcome: '', lesson: '', attackRole: 'colluder', available: false },
+  {
+    id: 6,
+    title: 'The threshold limit',
+    protocol: 'Verifiable secret sharing, but now you choose t: how many shares it takes to rebuild a number.',
+    attack: 'Collusion. As soon as t roommates pool their shares they can rebuild everyone else\'s number early, then pick their own last: rung 1 again, immune to commitments. Raise t to stop that, and t dead phones (or t quitters) leave too few shares to rebuild anyone.',
+    outcome: 'Unfixable. Secrecy needs t ≥ f + 1. Liveness needs n − f ≥ t. Together: n ≥ 2f + 1. Four roommates can survive one cheater, never two, whatever t is. Set t = 4 and let Dave quit: he wins, or nobody gets a room.',
+    lesson: 'You do not fix this. You choose t, and t is a trade between secrecy and liveness.',
+    attackRole: 'aborter',
+    available: true,
+  },
 ];
