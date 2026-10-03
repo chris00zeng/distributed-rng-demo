@@ -27,7 +27,7 @@ export function Panels({ views, roles, decision, deviated, onOverride, playable 
         const facts = panelFacts(view, p);
         const deciding = decision && decision.by === p && playable.includes(p) ? decision : undefined;
         const offPath = deviated?.has(p) ?? false;
-        const cls = `panel${cheating ? ' panel--cheater' : ''}${p === 0 ? ' panel--you' : ''}${offPath ? ' panel--deviating' : ''}${deciding ? ' panel--deciding' : ''}`;
+        const cls = `panel${cheating ? ' panel--cheater' : ''}${offPath ? ' panel--deviating' : ''}${deciding ? ' panel--deciding' : ''}`;
         return (
           <article key={p} className={cls} aria-label={`${name(p)}'s view`}>
             <header className="panel__head">

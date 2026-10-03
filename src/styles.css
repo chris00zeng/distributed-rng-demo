@@ -292,9 +292,6 @@ button.rung:disabled {
   min-height: 9rem;
   font-size: 0.9rem;
 }
-.panel--you {
-  border-color: color-mix(in srgb, var(--fg) 25%, transparent);
-}
 .panel--cheater {
   border-color: var(--accent);
 }
