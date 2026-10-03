@@ -18,12 +18,14 @@ export interface CardProps {
   offPath?: boolean;
   /** The party has gone silent (dropped) at this step. */
   silent?: boolean;
+  /** This step's message traffic at this card: sending to, or receiving from, `other`. */
+  traffic?: { kind: 'sending' | 'receiving'; other: string };
   onOverride?: (index: number, option: string) => void;
   className?: string;
 }
 
 /** One roommate's card: what they know right now, with the facts that just changed flashed. */
-export function RoommateCard({ party: p, view, prevView, role, decision, offPath = false, silent = false, onOverride, className }: CardProps) {
+export function RoommateCard({ party: p, view, prevView, role, decision, offPath = false, silent = false, traffic, onOverride, className }: CardProps) {
   const cheating = role !== 'honest';
   const facts = panelFacts(view, p);
   const diff = panelDiff(prevView ? panelFacts(prevView, p) : undefined, facts, prevView?.note, view.note);
@@ -33,6 +35,11 @@ export function RoommateCard({ party: p, view, prevView, role, decision, offPath
       <header className="panel__head">
         <h3>{name(p)}</h3>
         <span className="panel__phase">{silent ? 'silent · ' : ''}{offPath ? 'off the honest path · ' : ''}{panelPhase(view)}</span>
+        {traffic ? (
+          <span className={`panel__traffic panel__traffic--${traffic.kind}`}>
+            {traffic.kind === 'sending' ? `sending → ${traffic.other}` : `← from ${traffic.other}`}
+          </span>
+        ) : null}
       </header>
       {cheating ? <p className="panel__role">{name(p)} {ROLE_LABELS[role]}</p> : null}
       {decision ? <DecisionBox decision={decision} onOverride={onOverride} /> : null}

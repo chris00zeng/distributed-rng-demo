@@ -753,3 +753,9 @@ button.rung:disabled {
 /* You play this roommate: the round waits here */
 .decision--manual { border-style: solid; border-width: 2px; border-color: var(--accent); }
 .decision--manual .decision__opt { border-color: var(--accent); }
+
+/* Direction of the current message, on the cards */
+.panel__head { flex-wrap: wrap; }
+.panel__traffic { flex-basis: 100%; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; margin-top: 0.15rem; }
+.panel__traffic--sending { color: var(--fg); }
+.panel__traffic--receiving { color: var(--accent); }

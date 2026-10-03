@@ -87,6 +87,13 @@ export function Stage({ events, step, views, prevViews, roles, decision, deviate
           decision={decision && decision.by === p && playable.includes(p) ? decision : undefined}
           offPath={deviated?.has(p) ?? false}
           silent={silent.has(p)}
+          traffic={
+            arrows.some((a) => a.from === p)
+              ? { kind: 'sending', other: broadcast ? 'everyone' : name(arrows[0]!.to) }
+              : arrows.some((a) => a.to === p && a.delivered)
+                ? { kind: 'receiving', other: name(arrows[0]!.from) }
+                : undefined
+          }
           onOverride={onOverride}
           className={`stage__card stage__card--${p}${arrows.some((a) => a.from === p) ? ' stage__card--sending' : ''}${arrows.some((a) => a.to === p && a.delivered) ? ' stage__card--receiving' : ''}`}
         />
