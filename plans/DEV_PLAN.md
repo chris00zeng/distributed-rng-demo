@@ -122,6 +122,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Scope:** `ThresholdChart` gains a 3 to 7 selector that redraws the chart from `regime(n, t, f)` and states the most cheaters n roommates can tolerate; the t highlight and click-to-set apply only when charting the live house of four. No engine change.
 - **Verify:** Choose 5: two cheaters have a safe row; choose 7: three do; back to 4: the t cursor returns.
 - **Estimate:** 15 min · **Actual:** 10 min
+### PR20 — Collusion engine and Sandbox experiments (data)  `[x]`
+- **Goal:** The one attack the ladder describes but never shows, measured; plus the four experiment presets the Sandbox tab will offer.
+- **Covers:** R23 (engine half), R4b · D28
+- **Scope:** `forward` / `tell` / `plan` messages; `dealTiming`, `leak`, `withhold` decision points in the shared protocol; colluder policy (wait, forward, follow the leader's plan); `protocol/experiments.ts` presets with questions and expectations. No UI (the Sandbox tab follows once the two open UI lanes land, to avoid App conflicts).
+- **Verify:** Tests: two colluders at t = 2 ≈ 68%, at t = 3 fair with no peek; lone colluder fair; two quitters split the suite; dead phone at t = 4 stuck every round; levels 3 and 5 unchanged.
+- **Estimate:** 45 min · **Actual:** 35 min
 
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
@@ -229,6 +235,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR19 | 15 min | 10 min | n selector on the phase chart, display only |
+| PR20 | 45 min | 35 min | Collusion engine; two quitters do not deadlock (blink rule); colluders ≈ 68% not 100% |
 | PR14 | 30 min | — | |
 | Video | 30 min | — | |
 
@@ -247,6 +254,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 
 ## Changelog
 - 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
+- 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
 - 2026-10-02: PR10 done. The ladder now ends on the limit: a t slider, the t-versus-f phase chart, and a live liveness failure (t = 4, Dave quits: he wins or nobody gets a room). Rung 6 offers only honest and quitter roles; the colluder role waits for the Sandbox, which is cut.
 - 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.
