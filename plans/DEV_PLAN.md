@@ -176,7 +176,7 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Pin honest, pin two aborters, pin colluders; three charts, correctly labelled, until reload.
 - **Estimate:** 30 min · **Actual:** —
 
-### PR14 — Final rationale, time log, submission  `[ ]`
+### PR14 — Final rationale, time log, submission  `[ ]` (draft PR open; author to edit the voice, record the video, export transcripts)
 - **Goal:** Everything the brief asks for, honestly reported.
 - **Covers:** R19, R20 (script), R21, R22
 - **Scope:** `RATIONALE.md` final: both themes and why, the prior-work link, the core insight as the non-obvious part, decisions D1 to D20 distilled to the ones that mattered, the three limitations, the four extensions, total time from this doc. Video outline (5 beats: thesis, rung 2, rung 3, rung 5, rung 6 wall) kept in `RATIONALE.md`. Transcript export checklist. README final.
@@ -221,7 +221,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR16 | 60 min | 25 min | Roles are policies; decision events logged after their trigger; Dave-only move box |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
-| PR14 | 30 min | — | |
+| PR14 | 30 min | 20 min (draft) | RATIONALE.md drafted from the plan docs; README "What you can do" |
 | Video | 30 min | — | |
 
 ## Deliverables outside code
