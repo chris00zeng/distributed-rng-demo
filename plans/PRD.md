@@ -188,6 +188,7 @@ None open. Resolved 2026-10-02:
 | Submit AI transcripts; judgment is evaluated | R21; plan docs and changelogs record decisions |
 
 ## Changelog
+- 2026-10-02: Considered a variable number of roommates. Decided against it in the engine (four is baked into the 24-arrangement roll, the floorplan, the cast and the URL) and for it on the level 6 phase chart only, as a static selector (PR19).
 - 2026-10-02: Rung 4 outcome corrected from ≈44% to 100%: with the realistic reconstruction rule (use every share, void the round if they disagree) the honest roommates can detect but not attribute a lie, so one bad dealer or one forged share turns "quit" back into "restart". The 44% figure assumed a rule under which the fake-share attack was impossible (Dave's share, index 4, was never among the lowest two). Proposed in PR7; see Technical Plan D25.
 - 2026-10-02: Dropped the second-person roommate. Party 0 is now Zoe; the user watches from outside rather than playing a roommate (user request).
 - 2026-10-02: R25 arrangement grid revised from mini floorplans with initials to room-coloured chips sized by room, with a per-roommate hover that highlights their Royal Suite wins (user request).
