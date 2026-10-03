@@ -122,6 +122,13 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Scope:** `ThresholdChart` gains a 3 to 7 selector that redraws the chart from `regime(n, t, f)` and states the most cheaters n roommates can tolerate; the t highlight and click-to-set apply only when charting the live house of four. No engine change.
 - **Verify:** Choose 5: two cheaters have a safe row; choose 7: three do; back to 4: the t cursor returns.
 - **Estimate:** 15 min · **Actual:** 10 min
+### PR21 — Sandbox tab  `[x]`
+- **Goal:** Let the reviewer break it themselves: four one-click experiments, then free-form controls.
+- **Covers:** R23 (UI half), R8 (all roles for every roommate)
+- **Scope:** `ui/Sandbox.tsx`: experiment cards (question, Run it, expectation), protocol-by-level picker, a role dropdown per roommate filtered by `rolesFor`, dead-phone picker, t slider for shared protocols, seed, "Everyone honest" reset, the same step/simulation views as the ladder with every roommate's moves playable; a flask button at the end of the level nav opens it, choosing a level closes it. App change kept to the nav button and a wrapper. No pin-and-compare (stretch).
+- **Verify:** Deployed; the four experiments run from the tab and match the presets' expectations; custom roles change the chart.
+- **Estimate:** 45 min · **Actual:** 30 min
+
 ### PR20 — Collusion engine and Sandbox experiments (data)  `[x]`
 - **Goal:** The one attack the ladder describes but never shows, measured; plus the four experiment presets the Sandbox tab will offer.
 - **Covers:** R23 (engine half), R4b · D28
@@ -251,6 +258,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR19 | 15 min | 10 min | n selector on the phase chart, display only |
 | PR20 | 45 min | 35 min | Collusion engine; two quitters do not deadlock (blink rule); colluders ≈ 68% not 100% |
 | PR17 | 70 min | 35 min | Level wording, story beats, cryptography toggle with friendly words, chip initials |
+| PR21 | 45 min | 30 min | Sandbox tab with four experiments and per-roommate roles; every roommate playable |
 | PR14 | 30 min | — | |
 | Video | 30 min | — | |
 
@@ -269,6 +277,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 
 ## Changelog
 - 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
+- 2026-10-02: PR21 done (Sandbox tab). Built on the PR20 branch; opened against main.
 - 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
 - 2026-10-02: PR17 done (user feedback batch, parallel with PR18 stage view). Levels, story beats, villain Dave, "show the cryptography" that changes wording rather than hiding rows, initials on chips.
 - 2026-10-02: PR18 done (user feedback items 3, 4, 5). Stage view replaces the two-column panels/timeline layout in the step view; the timeline survives as collapsed history.

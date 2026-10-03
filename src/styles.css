@@ -716,3 +716,17 @@ button.rung:disabled {
   .stage__overlay { display: none; }
   .stage__centre { position: static; transform: none; width: auto; order: -1; margin-bottom: 0.5rem; }
 }
+/* ---------- PR21: Sandbox ---------- */
+.rung--sandbox { margin-left: 0.5rem; }
+.sandbox__title { margin: 0 0 0.25rem; font-size: 1.4rem; }
+.sandbox__lead { margin: 0 0 1rem; color: var(--muted); max-width: 70ch; }
+.experiments { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+.experiment { background: var(--rung-bg); border-radius: 10px; padding: 0.8rem 0.9rem; border: 2px solid transparent; }
+.experiment--on { border-color: var(--accent); }
+.experiment h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+.experiment__q { margin: 0 0 0.6rem; font-size: 0.9rem; }
+.experiment__expect { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--muted); }
+.sandbox__controls { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: end; margin-bottom: 0.75rem; }
+.control--role select { min-width: 12rem; }
+.sandbox__protocol { margin: 0 0 1rem; color: var(--muted); max-width: 80ch; }
+.sandbox__stat { margin-right: 0.6rem; }
