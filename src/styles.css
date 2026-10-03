@@ -615,3 +615,16 @@ button.rung:disabled {
 .poly__empty { fill: var(--muted); font-size: 13px; font-style: italic; }
 .poly__caption { margin-top: 0.5rem; color: var(--muted); font-size: 0.9rem; max-width: 72ch; }
 .poly__metaphor { font-style: italic; }
+
+/* ---------- PR10: rung 6 threshold ---------- */
+.control--t { min-width: 16rem; }
+.control--t input[type="range"] { accent-color: var(--accent); width: 100%; }
+.threshold { margin: 0 0 1.5rem; }
+.threshold__text { margin: 0 0 0.75rem; max-width: 62ch; }
+.phase { margin: 0; max-width: 520px; }
+.phase svg { width: 100%; height: auto; display: block; }
+.phase__axis { fill: var(--muted); font-size: 12px; }
+.phase__tick { fill: var(--fg); font-size: 13px; font-weight: 600; }
+.phase__cell { fill: #fff; font-size: 12px; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,0.25); stroke-width: 2px; }
+.phase__cursor { fill: none; stroke: var(--fg); stroke-width: 2; }
+.phase__legend { display: grid; gap: 0.25rem; margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
