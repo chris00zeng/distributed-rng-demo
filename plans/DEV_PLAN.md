@@ -128,6 +128,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Scope:** `forward` / `tell` / `plan` messages; `dealTiming`, `leak`, `withhold` decision points in the shared protocol; colluder policy (wait, forward, follow the leader's plan); `protocol/experiments.ts` presets with questions and expectations. No UI (the Sandbox tab follows once the two open UI lanes land, to avoid App conflicts).
 - **Verify:** Tests: two colluders at t = 2 ≈ 68%, at t = 3 fair with no peek; lone colluder fair; two quitters split the suite; dead phone at t = 4 stuck every round; levels 3 and 5 unchanged.
 - **Estimate:** 45 min · **Actual:** 35 min
+### PR18 — Stage view: cards at four corners, arrows per message, change flash, auto-play  `[x]`
+- **Goal:** Make the step-through something you watch: who is talking to whom, what each roommate just learned.
+- **Covers:** R6, R7 · D2, D17
+- **Scope:** `ui/Stage` places the four `RoommateCard`s (refactored out of `Panels`) at the corners of a 2×2 grid with an SVG overlay; the current logical message is drawn as a line per recipient (delivered solid with a travelling dot, pending dashed), broadcasts fan out, the centre shows the phase, the event in words and the result once known; abort/void/stuck/drop/start become a centred banner; a dropped roommate's card dims; the deciding card is outlined. `ui/panelDiff` flags facts that changed since the previous step; cards flash them (`fact--changed`) and a changed note. `ui/useAutoplay`: play/pause with 0.5/1/2 s per step, pauses by itself at Dave's decision, stops at the end, Space toggles. The sequence-diagram timeline moves under a collapsed "Message history". Phone width: cards stack, overlay hidden. `prefers-reduced-motion` respected.
+- **Verify:** Level 2, Dave quitting: arrows follow each message and the reveal fans out as three; changed facts flash; auto-play started two steps before Dave's decision stops exactly on it with his move box showing.
+- **Estimate:** 110 min · **Actual:** 45 min
 
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
@@ -239,6 +245,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
 | PR16 | 60 min | 25 min | Roles are policies; decision events logged after their trigger; Dave-only move box |
+| PR18 | 110 min | 45 min | Stage with corner cards and per-message arrows; change flash; auto-play pauses at Dave's move |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR19 | 15 min | 10 min | n selector on the phase chart, display only |
@@ -264,6 +271,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 - 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
 - 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
 - 2026-10-02: PR17 done (user feedback batch, parallel with PR18 stage view). Levels, story beats, villain Dave, "show the cryptography" that changes wording rather than hiding rows, initials on chips.
+- 2026-10-02: PR18 done (user feedback items 3, 4, 5). Stage view replaces the two-column panels/timeline layout in the step view; the timeline survives as collapsed history.
 - 2026-10-02: PR10 done. The ladder now ends on the limit: a t slider, the t-versus-f phase chart, and a live liveness failure (t = 4, Dave quits: he wins or nobody gets a room). Rung 6 offers only honest and quitter roles; the colluder role waits for the Sandbox, which is cut.
 - 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.
