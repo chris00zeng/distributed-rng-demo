@@ -743,3 +743,9 @@ button.rung:disabled {
 
 /* Room names in running text */
 .room-name { font-weight: 700; white-space: nowrap; }
+
+/* Rooms assigned, one roommate per line */
+.outcome__title { display: block; font-weight: 600; margin-bottom: 0.2rem; }
+.outcome__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; text-align: left; }
+.stage__centre .outcome__list { justify-content: center; }
+.stage__centre .outcome__title { text-align: center; }

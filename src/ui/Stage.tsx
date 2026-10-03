@@ -6,6 +6,7 @@
 import { withRoomNames } from './RoomName';
 import { DAVE, PARTY_IDS, type Event, type PartyId, type PartyView, type Role } from '../protocol/types';
 import { describeEvent, msgLabel, name, phaseLabel } from './format';
+import { OutcomeLines } from './OutcomeLines';
 import { RoommateCard } from './Panels';
 import { buildRows, type Row } from './Timeline';
 
@@ -98,7 +99,7 @@ export function Stage({ events, step, views, prevViews, roles, decision, deviate
               <strong>{name(arrows[0]!.from)}</strong> → <strong>{broadcast ? 'everyone' : name(arrows[0]!.to)}</strong>: {arrows[0]!.label}
               {broadcast ? <span className="stage__count"> ({arrows.filter((a) => a.delivered).length}/{arrows.length} delivered)</span> : null}
             </>
-          ) : withRoomNames(describeEvent(e, false)))}
+          ) : e.kind === 'outcome' ? <OutcomeLines assignment={e.assignment} /> : withRoomNames(describeEvent(e, false)))}
         </p>
         {resultLine ? <p className="stage__result">{withRoomNames(resultLine)}</p> : null}
       </div>

@@ -1,5 +1,6 @@
 import type { Event } from '../protocol/types';
 import { describeEvent } from './format';
+import { OutcomeLines } from './OutcomeLines';
 import { SPEEDS } from './useAutoplay';
 
 interface Props {
@@ -45,7 +46,7 @@ export function StepControls({ step, last, event, broadcast, onPrev, onNext, onN
         ) : null}
         <span className="steps__count">{step + 1} / {last + 1}</span>
       </div>
-      <p className="steps__event" aria-live="polite">{describeEvent(event, broadcast)}</p>
+      <div className="steps__event" aria-live="polite">{event.kind === 'outcome' ? <OutcomeLines assignment={event.assignment} /> : describeEvent(event, broadcast)}</div>
     </div>
   );
 }
