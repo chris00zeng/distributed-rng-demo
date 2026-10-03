@@ -740,4 +740,4 @@ export function createSharedParty(id: PartyId, t: number, verify = false): Share
   return new SharedParty(id, t, verify);
 }
 
-export const SHARED_ROLES: Role[] = ['honest', 'aborter', 'badDealer', 'fakeShare'];
+export const SHARED_ROLES: Role[] = ['honest', 'aborter', 'badDealer', 'fakeShare', 'colluder'];

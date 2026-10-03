@@ -4,6 +4,7 @@ import { ROOM_INFO } from './content/rooms';
 import { rolesFor } from './protocol/parties';
 import { DEFAULT_SEED, T_RANGE, rungRoles, rungScenario } from './protocol/scenario';
 import { ThresholdChart } from './ui/ThresholdChart';
+import { Sandbox } from './ui/Sandbox';
 import { maxTolerated } from './content/threshold';
 import { DAVE, PARTY_NAMES, type Event, type PartyId, type Role, type Rung } from './protocol/types';
 import { share } from './sim/simulate';
@@ -50,6 +51,7 @@ export function App() {
   };
 
   const [view, setView] = useState<View>('step');
+  const [sandbox, setSandbox] = useState(false);
   const [showMath, setShowMath] = useMathToggle();
   const rung = RUNGS[rungId]!;
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed, t), [rungId, daveRole, seed, t]);
@@ -80,6 +82,7 @@ export function App() {
   }, [view, tally, running, run]);
 
   const selectRung = (id: Rung) => {
+    setSandbox(false);
     setUrlState((s) => ({ ...s, rung: id, roles: { ...s.roles, [DAVE]: 'honest' } }));
   };
 
@@ -104,7 +107,7 @@ export function App() {
           <button
             key={r.id}
             type="button"
-            className={`rung${r.id === rungId ? ' rung--active' : ''}${r.available ? '' : ' rung--locked'}`}
+            className={`rung${!sandbox && r.id === rungId ? ' rung--active' : ''}${r.available ? '' : ' rung--locked'}`}
             title={r.available ? r.title : `${r.title} (coming soon)`}
             disabled={!r.available}
             aria-current={r.id === rungId ? 'step' : undefined}
@@ -113,7 +116,18 @@ export function App() {
             {r.id}
           </button>
         ))}
+        <button
+          type="button"
+          className={`rung rung--sandbox${sandbox ? ' rung--active' : ''}`}
+          title="Sandbox: try to break it yourself"
+          aria-current={sandbox ? 'step' : undefined}
+          onClick={() => setSandbox(true)}
+        >
+          ⚗
+        </button>
       </nav>
+
+      {sandbox ? <Sandbox /> : <>
 
       <section className="rung-copy">
         <h2>
@@ -259,6 +273,7 @@ export function App() {
           </div>
         </section>
       )}
+      </>}
     </main>
   );
 }
