@@ -740,3 +740,6 @@ button.rung:disabled {
 .control--role select { min-width: 12rem; }
 .sandbox__protocol { margin: 0 0 1rem; color: var(--muted); max-width: 80ch; }
 .sandbox__stat { margin-right: 0.6rem; }
+
+/* Room names in running text */
+.room-name { font-weight: 700; white-space: nowrap; }

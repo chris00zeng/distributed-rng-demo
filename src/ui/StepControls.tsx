@@ -36,8 +36,8 @@ export function StepControls({ step, last, event, broadcast, onPrev, onNext, onN
           </button>
         ) : null}
         <button type="button" onClick={onNext} disabled={step === last} title="Next message (→)">›</button>
-        <button type="button" onClick={onNextPhase} disabled={step === last} title="Skip to the next phase">next phase</button>
-        <button type="button" onClick={onEnd} disabled={step === last} title="Jump to the end">end</button>
+        <button type="button" onClick={onNextPhase} disabled={step === last} title="Skip to the next phase">Next phase</button>
+        <button type="button" onClick={onEnd} disabled={step === last} title="Jump to the end">End</button>
         {autoplay ? (
           <select className="steps__speed" value={autoplay.ms} onChange={(ev) => autoplay.setMs(Number(ev.target.value))} title="Seconds per step" aria-label="Auto-play speed">
             {SPEEDS.map((s) => <option key={s.ms} value={s.ms}>{s.label} / step</option>)}

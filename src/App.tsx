@@ -5,6 +5,7 @@ import { rolesFor } from './protocol/parties';
 import { DEFAULT_SEED, T_RANGE, rungRoles, rungScenario } from './protocol/scenario';
 import { ThresholdChart } from './ui/ThresholdChart';
 import { Sandbox } from './ui/Sandbox';
+import { RoomName, cap, withRoomNames } from './ui/RoomName';
 import { maxTolerated } from './content/threshold';
 import { DAVE, PARTY_NAMES, type Event, type PartyId, type Role, type Rung } from './protocol/types';
 import { share } from './sim/simulate';
@@ -96,7 +97,7 @@ export function App() {
     setUrlState((s) => ({ ...s, rung: id, roles: { ...s.roles, [DAVE]: 'honest' } }));
   };
 
-  const best = ROOM_INFO.master.label;
+  const best = <RoomName room="master" />;
   const daveBest = tally && tally.rounds - tally.stuck > 0 ? share(tally, DAVE, 'master') : null;
   const allStuck = tally !== null && tally.rounds > 0 && tally.stuck === tally.rounds;
 
@@ -157,7 +158,7 @@ export function App() {
           <span>{PARTY_NAMES[DAVE]}</span>
           <select value={daveRole} onChange={(e) => setDaveRole(e.target.value as Role)}>
             {roles.map((role) => (
-              <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+              <option key={role} value={role}>{cap(ROLE_LABELS[role])}</option>
             ))}
           </select>
         </label>
@@ -244,7 +245,7 @@ export function App() {
             caption={
               shownArrangement === null
                 ? 'The picks add up to one of these 24 numbers. Step to the end of the round to see which.'
-                : `This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`
+                : withRoomNames(`This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`)
             }
           />
         </section>

@@ -1,6 +1,7 @@
 import { DAVE, PARTY_IDS, type Event, type PartyId, type PartyView, type Role } from '../protocol/types';
 import { ROLE_LABELS } from '../content/rungs';
 import { name, roomLabel } from './format';
+import { cap, withRoomNames } from './RoomName';
 import { panelDiff } from './panelDiff';
 import { panelFacts, panelPhase } from './panelFacts';
 
@@ -43,7 +44,7 @@ export function RoommateCard({ party: p, view, prevView, role, decision, offPath
             data-fact={f.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
           >
             <dt>{f.label}</dt>
-            <dd>{f.value}</dd>
+            <dd>{withRoomNames(f.value)}</dd>
           </div>
         ))}
       </dl>
@@ -94,7 +95,7 @@ function DecisionBox({ decision, onOverride }: { decision: Decision; onOverride?
     <div className={`decision${decision.deviates ? ' decision--deviates' : ''}`} role="group" aria-label={`${name(decision.by)}'s move`}>
       <p className="decision__prompt">
         <strong>{name(decision.by)}'s move.</strong> {decision.point.prompt}
-        {wouldGet ? <>. {name(decision.by)} would get <em>{wouldGet}</em></> : null}.
+        {wouldGet ? <>. {name(decision.by)} would get {withRoomNames(wouldGet)}</> : null}.
         {ctx.ifQuit === 'reconstructed' ? ' If he quits, the others rebuild his number anyway.' : ''}
         {ctx.ifQuit === 'restart' ? ' If he quits, his shares will not add up and the round restarts.' : ''}
       </p>
@@ -111,7 +112,7 @@ function DecisionBox({ decision, onOverride }: { decision: Decision; onOverride?
               onClick={() => onOverride?.(decision.index, o.id)}
               title={taken ? 'what he did' : `make him ${o.label}`}
             >
-              {o.label}{taken ? ' ✓' : ''}
+              {cap(o.label)}{taken ? ' ✓' : ''}
             </button>
           );
         })}

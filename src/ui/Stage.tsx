@@ -3,6 +3,7 @@
  * message drawn as an animated arrow between them, and the event in words in
  * the middle. Broadcasts fan out as several arrows.
  */
+import { withRoomNames } from './RoomName';
 import { DAVE, PARTY_IDS, type Event, type PartyId, type PartyView, type Role } from '../protocol/types';
 import { describeEvent, msgLabel, name, phaseLabel } from './format';
 import { RoommateCard } from './Panels';
@@ -92,14 +93,14 @@ export function Stage({ events, step, views, prevViews, roles, decision, deviate
       <div className={`stage__centre${banner ? ' stage__centre--banner' : ''}`} aria-live="polite">
         {phase ? <span className="stage__phase">{phaseLabel(phase)}</span> : null}
         <p className="stage__event">
-          {banner ?? (arrows.length ? (
+          {(banner ? withRoomNames(banner) : null) ?? (arrows.length ? (
             <>
               <strong>{name(arrows[0]!.from)}</strong> → <strong>{broadcast ? 'everyone' : name(arrows[0]!.to)}</strong>: {arrows[0]!.label}
               {broadcast ? <span className="stage__count"> ({arrows.filter((a) => a.delivered).length}/{arrows.length} delivered)</span> : null}
             </>
-          ) : describeEvent(e, false))}
+          ) : withRoomNames(describeEvent(e, false)))}
         </p>
-        {resultLine ? <p className="stage__result">{resultLine}</p> : null}
+        {resultLine ? <p className="stage__result">{withRoomNames(resultLine)}</p> : null}
       </div>
     </div>
   );

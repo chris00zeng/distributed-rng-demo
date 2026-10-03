@@ -19,6 +19,7 @@ import { StepControls } from './StepControls';
 import { Timeline, buildRows } from './Timeline';
 import { useRound } from './useRound';
 import { ROUNDS, useSimulation } from './useSimulation';
+import { RoomName, cap, withRoomNames } from './RoomName';
 
 type View = 'step' | 'sim';
 
@@ -91,7 +92,7 @@ export function Sandbox() {
   const pick = (e: Experiment) => { setPicked(e); setDraft(toDraft(e.scenario)); setView('sim'); };
 
   const protocol = scenario.protocol;
-  const best = ROOM_INFO.master.label;
+  const best = <RoomName room="master" />;
   const done = tally ? tally.rounds - tally.stuck : 0;
   const levelCopy = RUNGS[draft.level]!;
 
@@ -127,7 +128,7 @@ export function Sandbox() {
             <span>{PARTY_NAMES[p]}</span>
             <select value={draft.roles[p]} onChange={(ev) => update({ roles: { ...draft.roles, [p]: ev.target.value as Role } })}>
               {rolesFor(protocol, p).map((role) => (
-                <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+                <option key={role} value={role}>{cap(ROLE_LABELS[role])}</option>
               ))}
             </select>
           </label>
@@ -174,7 +175,7 @@ export function Sandbox() {
               <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
             </div>
           </div>
-          <ArrangementGrid highlight={shownArrangement} caption={shownArrangement === null ? 'Step to the end of the round to see where it lands.' : `This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`} />
+          <ArrangementGrid highlight={shownArrangement} caption={shownArrangement === null ? 'Step to the end of the round to see where it lands.' : withRoomNames(`This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`)} />
         </div>
       ) : (
         <div className="view view--sim">

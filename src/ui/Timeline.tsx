@@ -50,7 +50,7 @@ export function buildRows(events: Event[]): Row[] {
       }
       const opt = e.point.options.find((o) => o.id === e.chosen);
       label = `${name(e.by)} ${e.deviates ? 'deviates' : 'decides'}: ${opt?.label ?? e.chosen}`;
-      rows.push({ first: i, last: i, kind: 'marker', label, tone: e.deviates ? 'deviate' : 'decision', silent: [...silent] });
+      rows.push({ first: i, last: i, kind: 'marker', label: label.charAt(0).toUpperCase() + label.slice(1), tone: e.deviates ? 'deviate' : 'decision', silent: [...silent] });
       continue;
     }
     switch (e.kind) {
@@ -67,7 +67,7 @@ export function buildRows(events: Event[]): Row[] {
         continue;
       }
     }
-    rows.push({ first: i, last: i, kind: 'marker', label, tone, silent: [...silent] });
+    rows.push({ first: i, last: i, kind: 'marker', label: label.charAt(0).toUpperCase() + label.slice(1), tone, silent: [...silent] });
   }
   return rows;
 }

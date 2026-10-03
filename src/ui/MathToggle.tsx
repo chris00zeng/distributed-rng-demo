@@ -21,7 +21,7 @@ export function MathToggle({ on, onChange }: { on: boolean; onChange: (on: boole
       title="Off: plain words (a sealed number, a share). On: the real hashes, nonces, share values, curve points and padding behind them."
     >
       <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} />
-      <span>show the cryptography</span>
+      <span>Show the cryptography</span>
     </label>
   );
 }

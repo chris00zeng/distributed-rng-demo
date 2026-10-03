@@ -12,7 +12,7 @@ interface Props {
   highlight?: number | null;
   /** Per-arrangement counts; cells are shaded by share of the total. */
   weights?: readonly number[];
-  caption?: string;
+  caption?: React.ReactNode;
 }
 
 function describe(k: number): string {
