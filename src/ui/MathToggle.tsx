@@ -1,4 +1,4 @@
-/** "Show the math" (PRD R11): raw hashes, nonces and field values on demand. Remembered per browser. */
+/** "Show the cryptography" (PRD R11): hashes, nonces, share values, curve points and padding on demand. Remembered per browser. */
 import { useState } from 'react';
 
 const KEY = 'fair-rooms:show-math';
@@ -16,9 +16,12 @@ export function useMathToggle(): [boolean, (on: boolean) => void] {
 
 export function MathToggle({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
   return (
-    <label className="math-toggle" title="Reveal the hashes, nonces and field values behind the pictures">
+    <label
+      className="math-toggle"
+      title="Off: plain words (a sealed number, a share). On: the real hashes, nonces, share values, curve points and padding behind them."
+    >
       <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} />
-      <span>show the math</span>
+      <span>show the cryptography</span>
     </label>
   );
 }

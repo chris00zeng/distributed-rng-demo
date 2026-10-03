@@ -11,6 +11,7 @@ import { ArrangementGrid } from './ui/ArrangementGrid';
 import { FairnessChart } from './ui/Chart';
 import { Intro } from './ui/Intro';
 import { MathToggle, useMathToggle } from './ui/MathToggle';
+import { mathMode } from './ui/mathMode';
 import { PolynomialVisual } from './ui/PolynomialVisual';
 import { Panels } from './ui/Panels';
 import { StepControls } from './ui/StepControls';
@@ -51,6 +52,7 @@ export function App() {
 
   const [view, setView] = useState<View>('step');
   const [showMath, setShowMath] = useMathToggle();
+  mathMode.set(showMath);
   const rung = RUNGS[rungId]!;
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed, t), [rungId, daveRole, seed, t]);
   const roles = rungRoles(rungId, rolesFor(scenario.protocol, DAVE));
@@ -99,7 +101,7 @@ export function App() {
 
       <Intro />
 
-      <nav className="ladder" aria-label="Attack ladder">
+      <nav className="ladder" aria-label="Levels">
         {RUNGS.map((r) => (
           <button
             key={r.id}
@@ -117,8 +119,9 @@ export function App() {
 
       <section className="rung-copy">
         <h2>
-          <span className="rung-copy__id">Rung {rung.id}</span> {rung.title}
+          <span className="rung-copy__id">Level {rung.id}</span> {rung.title}
         </h2>
+        <p className="rung-copy__story">{rung.story}</p>
         <dl>
           <dt>Protocol</dt><dd>{rung.protocol}</dd>
           <dt>Attack</dt><dd>{rung.attack}</dd>

@@ -625,3 +625,7 @@ button.rung:disabled {
 .phase__cell { fill: #fff; font-size: 12px; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,0.25); stroke-width: 2px; }
 .phase__cursor { fill: none; stroke: var(--fg); stroke-width: 2; }
 .phase__legend { display: grid; gap: 0.25rem; margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+
+/* ---------- PR17: copy and quick wins ---------- */
+.rung-copy__story { margin: 0 0 0.75rem; max-width: 62ch; font-size: 1.02rem; }
+.agrid__chip { display: inline-flex; align-items: center; justify-content: center; color: #fff; font-style: normal; font-weight: 800; font-size: 0.62rem; line-height: 1; text-shadow: 0 1px 1px rgba(0,0,0,0.45); }

@@ -53,6 +53,8 @@ The default of *n* = 4 is chosen because it tolerates exactly one cheater, so ru
 
 The ladder ends on rung 6 deliberately: closing on a fundamental limit is a stronger ending than closing on a fix. For that reason the rung 6 explainer (slider and phase chart) ships ahead of the live collusion simulation.
 
+A rung is shown as a **Level** in the product ("Level 3 · Commit + secret shares"); "rung" stays the name in these docs and in the code. Each level opens with a short story beat in the roommates' voice, and Dave is written as the house villain: wry and scheming, never cartoonish, and never at the expense of the maths.
+
 ## Goals / Non-goals
 
 **Goals**
@@ -95,7 +97,7 @@ Priorities: **P0** must ship, **P1** should ship, **P2** stretch.
 | R8 | **Cheater role picker** for Dave. Roles: honest, last mover, aborter (P0); bad dealer, fake-share submitter (P1); colluder with a second roommate (P2, with R4b). | P0 / P1 / P2 | Only roles meaningful for the current rung are offered. Switching role and re-running changes the timeline and the chart. | User decision |
 | R9 | **"Run 1,000 rounds"** produces a bar chart of room frequency per roommate against the fair 1/*n* line, available on every rung, plus the 24-arrangement grid shaded by how often each arrangement came up. | P0 | The chart appears in under 2 seconds, shows four roommates and the 1/*n* line, and the Royal Suite frequency is the headline number. | User decision |
 | R10 | **Rooms with personality**: The Royal Suite, The Decent One, The Shoebox, Basically a Closet, each with a one-line description. Default *n* = 4. | P0 | Rooms are named and visibly unequal. The outcome of a round is a room assignment, not just a number. | User decision (names revised 2026-10-02) |
-| R11 | **Abstract by default, math on demand.** A "show the math" toggle reveals hashes, nonces, field values and commitments. | P1 | Default view uses plain words and pictures. Toggling shows the real values used in that round. | User decision |
+| R11 | **Abstract by default, cryptography on demand.** A "show the cryptography" toggle reveals hashes, nonces, share values, curve points and padding. | P1 | Default view uses plain words ("a sealed number", "a share of Ana's number", "17 (padded)") in the panels and the timeline. Toggling shows the real values used in that round. | User decision (renamed 2026-10-02) |
 | R12 | **Polynomial visual** for shares: points on a line (*t* = 2), secret at the y-intercept; a bad share sits off the line; different pairs give different intercepts; the verifiable check marks it ✗. | P1 | Shown on rungs 3 to 5. Real-number plot as metaphor, finite-field values behind the math toggle. | User decision |
 | R13 | **Reproducible, shareable runs.** A run's seed is in the URL; opening the URL replays the same round and the same 1,000-round result. | P1 | Copying the URL into a fresh tab reproduces the timeline and chart exactly. | User decision |
 | R14 | **Each rung lands in ~30 seconds.** Every rung has a short title, one-line attack, one-line outcome, and the fix it motivates. | P0 | A reader can skim rung headers alone and reconstruct the ladder. No rung needs the previous one's text to be understood. | User decision (risk list) |
@@ -188,6 +190,7 @@ None open. Resolved 2026-10-02:
 | Submit AI transcripts; judgment is evaluated | R21; plan docs and changelogs record decisions |
 
 ## Changelog
+- 2026-10-02: Rungs are shown as Levels in the product; each level has a story beat and Dave is written as the villain (user feedback). R11 renamed to "show the cryptography" and made to change the panels and timeline wording, not just hide two rows. Arrangement chips carry roommate initials.
 - 2026-10-02: Rung 4 outcome corrected from ≈44% to 100%: with the realistic reconstruction rule (use every share, void the round if they disagree) the honest roommates can detect but not attribute a lie, so one bad dealer or one forged share turns "quit" back into "restart". The 44% figure assumed a rule under which the fake-share attack was impossible (Dave's share, index 4, was never among the lowest two). Proposed in PR7; see Technical Plan D25.
 - 2026-10-02: Dropped the second-person roommate. Party 0 is now Zoe; the user watches from outside rather than playing a roommate (user request).
 - 2026-10-02: R25 arrangement grid revised from mini floorplans with initials to room-coloured chips sized by room, with a per-roommate hover that highlights their Royal Suite wins (user request).
