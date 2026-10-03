@@ -632,3 +632,6 @@ button.rung:disabled {
 .phase__n-btn { font: inherit; font-weight: 600; width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent); background: var(--rung-bg); color: var(--fg); cursor: pointer; }
 .phase__n-btn.is-on { background: var(--accent); color: #fff; border-color: var(--accent); }
 .phase__n-note { flex-basis: 100%; color: var(--muted); }
+/* ---------- PR17: copy and quick wins ---------- */
+.rung-copy__story { margin: 0 0 0.75rem; max-width: 62ch; font-size: 1.02rem; }
+.agrid__chip { display: inline-flex; align-items: center; justify-content: center; color: #fff; font-style: normal; font-weight: 800; font-size: 0.62rem; line-height: 1; text-shadow: 0 1px 1px rgba(0,0,0,0.45); }

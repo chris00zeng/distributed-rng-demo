@@ -95,3 +95,44 @@ describe('timeline rows', () => {
     expect(rows.filter((r) => r.tone === 'start').length).toBeGreaterThan(1);
   });
 });
+
+describe('show the cryptography (R11)', () => {
+  it('hides hex when off and shows it when on', async () => {
+    const { mathMode } = await import('./mathMode');
+    const { log } = runRound(rungScenario(5, 'honest', 'crypto-toggle'), { record: true });
+    const last = log.views.at(-1)!;
+    try {
+      mathMode.set(false);
+      const off = panelFacts(last[0]!, 0);
+      const offText = off.map((f) => `${f.label}: ${f.value}`).join('\n');
+      expect(off.some((f) => f.label === 'My nonce')).toBe(false);
+      expect(offText).not.toMatch(/[0-9a-f]{6}…/);
+      expect(offText).toMatch(/\(padded\)/);
+      expect(off.some((f) => f.label === 'Sealed numbers from')).toBe(true);
+
+      mathMode.set(true);
+      const on = panelFacts(last[0]!, 0);
+      const onText = on.map((f) => `${f.label}: ${f.value}`).join('\n');
+      expect(onText).toMatch(/\+ padding [0-9a-f]{6}…/);
+      expect(on.some((f) => f.label === 'Commitments seen')).toBe(true);
+      expect(on.find((f) => f.label === 'Shares held')!.value).toMatch(/[0-9a-f]{6}…/);
+    } finally {
+      mathMode.set(false);
+    }
+  });
+
+  it('a level 2 round reads in plain words with the cryptography off', async () => {
+    const { mathMode } = await import('./mathMode');
+    const { msgLabel } = await import('./format');
+    const { log } = runRound(rungScenario(2, 'honest', 'crypto-words'), { record: true });
+    const commit = log.events.find((e) => e.kind === 'deliver' && e.env.msg.kind === 'commit')!;
+    try {
+      mathMode.set(false);
+      expect(commit.kind === 'deliver' ? msgLabel(commit.env.msg) : '').toBe('commits (sealed)');
+      mathMode.set(true);
+      expect(commit.kind === 'deliver' ? msgLabel(commit.env.msg) : '').toBe('commits (hash)');
+    } finally {
+      mathMode.set(false);
+    }
+  });
+});

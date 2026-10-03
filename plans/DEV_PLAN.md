@@ -189,6 +189,13 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Pin honest, pin two aborters, pin colluders; three charts, correctly labelled, until reload.
 - **Estimate:** 30 min · **Actual:** —
 
+### PR17 — Copy and quick wins  `[x]`
+- **Goal:** The product reads as a story about levels and a villain, and the cryptography toggle visibly does something.
+- **Covers:** R10, R11, R14, R24, R25
+- **Scope:** "Rung" → "Level" in every user-facing string (code and plan docs keep "rung"); a `story` beat per level in the roommates' voice with Dave as the villain, plus sharper role labels and intro; "show the math" → "show the cryptography" backed by a module-level `mathMode` flag that `panelFacts` and `format` consult, so the panels and timeline say "sealed", "a share", "17 (padded)" when off and show hashes, nonces, share values, curve points and padding when on; roommate initials inside the arrangement chips. Tests: both toggle states, every level has a story, no "rung" in user-facing copy.
+- **Verify:** Level heading with its story; toggle off reads in plain words, on shows hex; chips show Z A B D.
+- **Estimate:** 70 min · **Actual:** 35 min
+
 ### PR14 — Final rationale, time log, submission  `[ ]`
 - **Goal:** Everything the brief asks for, honestly reported.
 - **Covers:** R19, R20 (script), R21, R22
@@ -236,6 +243,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR13 | 30 min | — | |
 | PR19 | 15 min | 10 min | n selector on the phase chart, display only |
 | PR20 | 45 min | 35 min | Collusion engine; two quitters do not deadlock (blink rule); colluders ≈ 68% not 100% |
+| PR17 | 70 min | 35 min | Level wording, story beats, cryptography toggle with friendly words, chip initials |
 | PR14 | 30 min | — | |
 | Video | 30 min | — | |
 
@@ -255,6 +263,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 ## Changelog
 - 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
 - 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
+- 2026-10-02: PR17 done (user feedback batch, parallel with PR18 stage view). Levels, story beats, villain Dave, "show the cryptography" that changes wording rather than hiding rows, initials on chips.
 - 2026-10-02: PR10 done. The ladder now ends on the limit: a t slider, the t-versus-f phase chart, and a live liveness failure (t = 4, Dave quits: he wins or nobody gets a room). Rung 6 offers only honest and quitter roles; the colluder role waits for the Sandbox, which is cut.
 - 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.

@@ -72,7 +72,10 @@ export function ArrangementGrid({ highlight = null, weights, caption }: Props) {
                       className={`agrid__chip agrid__chip--${room}${focus !== null && focus !== p ? ' agrid__chip--dim' : ''}`}
                       style={{ background: ROOM_INFO[room].color }}
                       onMouseEnter={() => setFocus(p)}
-                    />
+                      title={`${PARTY_NAMES[p]}: ${ROOM_INFO[room].label}`}
+                    >
+                      {PARTY_NAMES[p][0]}
+                    </i>
                   );
                 })}
               </div>
