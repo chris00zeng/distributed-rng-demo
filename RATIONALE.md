@@ -45,7 +45,7 @@ Two things I only understood by building it:
 ## Time spent
 
 Planning (requirements, technical plan, development plan, all approved before code): about 2.5 hours.
-Build, measured per pull request and summed as wall-clock with parallel work overlapped: about 7.3 hours, of which roughly 1.5 hours went to feedback-driven polish after the ladder was complete.
+Build, measured per pull request and summed as wall-clock with parallel work overlapped: about 8.6 hours. The ladder itself, levels 0 to 6, took about 4.5 hours; the rest went to a review-driven polish pass (story, stage view, Sandbox, playing Dave yourself) that I chose to do knowing it would push past the suggested limit, because the explainer is the product and the feedback was right.
 
 Method: the plan docs were written first and kept in sync with every change; independent pieces were built in parallel by separate agent sessions in git worktrees, each opening its own pull request; every merge was reviewed and made by me. The development plan in `plans/DEV_PLAN.md` records the estimate and the actual for every pull request.
 

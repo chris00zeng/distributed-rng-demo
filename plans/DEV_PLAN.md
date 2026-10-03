@@ -279,6 +279,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 
 ## Changelog
 - 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
+- 2026-10-02: Wall-clock build time after the review pass: about 8.6 h (ladder 4.5 h, polish and Sandbox 4.1 h); stated in RATIONALE.md.
 - 2026-10-02: Integration branch polish from user review: stage message box in its own grid cell (no overlap), room names coloured in text, casing pass, "Rooms assigned" one per line, and the `manual` "You play Dave" role (R27a). 138 tests.
 - 2026-10-02: PR21 done (Sandbox tab). Built on the PR20 branch; opened against main.
 - 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
