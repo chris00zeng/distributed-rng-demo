@@ -1,4 +1,4 @@
-/** One house, four rooms to scale, colour-coded (PRD R25). Also the mini cell of the arrangement grid. */
+/** One house, four rooms to scale, colour-coded (PRD R25). */
 import type { Room } from '../crypto/arrangements';
 import { ROOMS } from '../crypto/arrangements';
 import { ROOM_INFO } from '../content/rooms';
@@ -30,8 +30,6 @@ const LABEL_SIZE: Record<Room, number> = { master: 13, decent: 10, small: 10, cl
 interface Props {
   /** Who is in which room. Omit for an unassigned house. */
   assignment?: Partial<Record<PartyId, Room>>;
-  /** Compact cell for the arrangement grid: no labels, initials only. */
-  mini?: boolean;
   className?: string;
   title?: string;
 }
@@ -41,11 +39,11 @@ function occupant(assignment: Partial<Record<PartyId, Room>> | undefined, room: 
   return PARTY_IDS.find((p) => assignment[p] === room);
 }
 
-export function Floorplan({ assignment, mini = false, className, title }: Props) {
+export function Floorplan({ assignment, className, title }: Props) {
   return (
     <svg
       viewBox={`0 0 ${PLAN_W} ${PLAN_H}`}
-      className={`floorplan${mini ? ' floorplan--mini' : ''}${className ? ` ${className}` : ''}`}
+      className={`floorplan${className ? ` ${className}` : ''}`}
       role="img"
       aria-label={title ?? (assignment ? 'Who gets which room' : 'The house')}
     >
@@ -61,34 +59,32 @@ export function Floorplan({ assignment, mini = false, className, title }: Props)
           <g key={room} className={`fp__room fp__room--${room}`}>
             <rect {...rectAttrs(b)} fill={info.color} className="fp__floor" />
             {room === 'master' ? <rect {...rectAttrs(ENSUITE)} className="fp__ensuite" /> : null}
-            {room === 'master' && !mini ? (
+            {room === 'master' ? (
               <g className="fp__chandelier" transform={`translate(${b.x + 70} ${b.y + 40})`}>
                 <line x1="0" y1="-14" x2="0" y2="0" />
                 <circle cx="0" cy="4" r="7" />
                 <circle cx="-12" cy="8" r="2.5" /><circle cx="12" cy="8" r="2.5" /><circle cx="0" cy="14" r="2.5" />
               </g>
             ) : null}
-            {!mini ? (
-              <text x={b.x + 6} y={b.y + LABEL_SIZE[room] + 4} className="fp__label" style={{ fontSize: LABEL_SIZE[room] }}>
-                {room === 'closet' ? 'Closet' : info.label}
-              </text>
-            ) : null}
+            <text x={b.x + 6} y={b.y + LABEL_SIZE[room] + 4} className="fp__label" style={{ fontSize: LABEL_SIZE[room] }}>
+              {room === 'closet' ? 'Closet' : info.label}
+            </text>
             {who !== undefined ? (
               <text
                 x={b.x + b.w / 2}
-                y={b.y + b.h / 2 + (mini ? 7 : 12)}
+                y={b.y + b.h / 2 + 12}
                 textAnchor="middle"
-                className={`fp__who${mini ? ' fp__who--mini' : ''}`}
+                className="fp__who"
               >
-                {mini ? PARTY_NAMES[who][0] : PARTY_NAMES[who]}
+                {PARTY_NAMES[who]}
               </text>
             ) : null}
           </g>
         );
       })}
-      {!mini ? <text x={BALCONY.x + 6} y={BALCONY.y + 13} className="fp__tiny">balcony</text> : null}
-      {!mini ? <text x={ENSUITE.x + 5} y={ENSUITE.y + 14} className="fp__tiny">en-suite</text> : null}
-      {!mini ? <text x={HALL[0]!.x + 6} y={HALL[0]!.y + 28} className="fp__tiny fp__tiny--hall">hall · kitchen · the shared bathroom</text> : null}
+      <text x={BALCONY.x + 6} y={BALCONY.y + 13} className="fp__tiny">balcony</text>
+      <text x={ENSUITE.x + 5} y={ENSUITE.y + 14} className="fp__tiny">en-suite</text>
+      <text x={HALL[0]!.x + 6} y={HALL[0]!.y + 28} className="fp__tiny fp__tiny--hall">hall · kitchen · the shared bathroom</text>
     </svg>
   );
 }
