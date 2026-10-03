@@ -65,6 +65,20 @@ export class SharedParty extends BaseParty {
   /** Complainants I have already answered (a complaint reaches me twice: directly and via "checked"). */
   protected answered = new Set<PartyId>();
 
+  // ---- collusion (D28) ----
+  /** Everyone whose role is `colluder`, me included if I am one. */
+  protected ring: PartyId[] = [];
+  /** The ringleader is the highest-numbered colluder (Dave, in the ladder). */
+  protected leader: PartyId | null = null;
+  /** I chose to see the others' shares before dealing. */
+  protected waitingToDeal = false;
+  /** Shares forwarded to me by accomplices, per dealer. */
+  protected leaked = new Map<PartyId, Share[]>();
+  /** Accomplices' own picks, told to me. */
+  protected told = new Map<PartyId, Scalar>();
+  /** Set once I have planned (leader) or been told the plan (accomplice). */
+  protected planned = false;
+
   constructor(id: PartyId, t: number, verify = false) {
     super(id, 'commit');
     this.t = t;
@@ -74,6 +88,8 @@ export class SharedParty extends BaseParty {
   // ---- commit ----
 
   onStart(ctx: Ctx): void {
+    this.ring = PARTY_IDS.filter((p) => ctx.scenario.roles[p] === 'colluder');
+    this.leader = this.ring.length >= 2 ? Math.max(...this.ring) as PartyId : null;
     if (this.verify) {
       // Rung 5+: pad the pick (a commitment to one of 24 numbers is guessable, D23),
       // choose the share polynomial now, and commit to every coefficient.
@@ -110,7 +126,24 @@ export class SharedParty extends BaseParty {
       case 'share':
         if (msg.dealer !== env.from || msg.x !== xOf(this.id)) return; // not mine, ignore
         this.holdShare({ dealer: msg.dealer, x: msg.x, y: msg.y });
+        this.maybeLeak(ctx, { dealer: msg.dealer, x: msg.x, y: msg.y });
+        this.maybeCollude(ctx);
         this.maybeReveal(ctx);
+        break;
+      case 'forward':
+        if (!this.ring.includes(env.from) || this.id !== this.leader) return;
+        this.leaked.set(msg.dealer, [...(this.leaked.get(msg.dealer) ?? []), { x: msg.x, y: msg.y }]);
+        this.maybeCollude(ctx);
+        break;
+      case 'tell':
+        if (!this.ring.includes(env.from) || this.id !== this.leader) return;
+        this.told.set(env.from, msg.value);
+        this.maybeCollude(ctx);
+        break;
+      case 'plan':
+        if (env.from !== this.leader || !this.waitingToDeal || this.planned) return;
+        this.planned = true;
+        this.followPlan(ctx, msg.deal);
         break;
       case 'complaint':
         this.recordComplaint(ctx, env.from, msg.dealer);
@@ -176,8 +209,103 @@ export class SharedParty extends BaseParty {
     if (this.state.phase !== 'commit') return;
     if (!this.active().every((p) => this.state.commitments[p] !== undefined)) return;
     this.state.phase = 'deal';
+    const timing = ctx.decide({
+      kind: 'dealTiming',
+      prompt: 'Everyone has committed',
+      options: [
+        { id: 'now', label: 'deal my shares now', honest: true },
+        { id: 'wait', label: 'see what the others deal first', honest: false },
+      ],
+      context: { accomplices: this.leader === null ? 0 : this.ring.length - 1 },
+    });
+    if (timing === 'wait') {
+      this.waitingToDeal = true;
+      this.state.note = "waiting to see the others' shares before dealing";
+      if (this.leader !== null && this.id !== this.leader) ctx.send(this.leader, { kind: 'tell', value: this.state.myValue! });
+      return;
+    }
     this.dealShares(ctx);
     this.maybeReveal(ctx);
+  }
+
+  /** Decision 'leak': an accomplice forwards a share it holds to the ringleader. */
+  protected maybeLeak(ctx: Ctx, share: Share & { dealer: PartyId }): void {
+    if (this.leader === null || this.id === this.leader || !this.ring.includes(this.id)) return;
+    if (this.ring.includes(share.dealer)) return;
+    const choice = ctx.decide({
+      kind: 'leak',
+      prompt: `Holding a share of ${PARTY_NAMES[share.dealer]}'s number`,
+      options: [
+        { id: 'keep', label: 'keep it private, as the protocol says', honest: true },
+        { id: 'forward', label: `slip it to ${PARTY_NAMES[this.leader]}`, honest: false },
+      ],
+    });
+    if (choice === 'forward') ctx.send(this.leader, { kind: 'forward', dealer: share.dealer, x: share.x, y: share.y });
+  }
+
+  /**
+   * Ringleader: once every honest dealer's shares (mine plus the forwarded ones) and every
+   * accomplice's pick are in, rebuild the honest picks early and choose which of us deals.
+   * Someone who never deals is simply left out of the sum, so the ring picks the best of
+   * 2^k outcomes. With fewer than t shares per dealer nothing can be rebuilt: deal honestly.
+   */
+  protected maybeCollude(ctx: Ctx): void {
+    if (this.id !== this.leader || !this.waitingToDeal || this.planned) return;
+    const honest = this.active().filter((p) => !this.ring.includes(p));
+    const accomplices = this.ring.filter((p) => p !== this.id);
+    if (!accomplices.every((a) => this.told.has(a))) return;
+    const perDealer = honest.map((h) => {
+      const shares = [...(this.leaked.get(h) ?? [])];
+      const mine = this.heldFrom(h);
+      if (mine) shares.push(mine);
+      return { h, shares };
+    });
+    const complete = perDealer.every(({ h, shares }) => this.heldFrom(h) !== undefined && shares.length >= accomplices.length + 1);
+    if (!complete) return;
+    this.planned = true;
+    const canRebuild = perDealer.every(({ shares }) => shares.length >= this.t);
+    if (!canRebuild) {
+      this.state.note = `only ${perDealer[0]?.shares.length ?? 0} shares per number: not enough to peek. Dealing honestly.`;
+      for (const a of accomplices) ctx.send(a, { kind: 'plan', deal: true });
+      this.dealShares(ctx);
+      this.maybeReveal(ctx);
+      return;
+    }
+    const honestTotal = perDealer.reduce((s, { shares }) => s + reconstruct(shares), 0n);
+    const picks = new Map<PartyId, Scalar>([[this.id, this.state.myValue!], ...accomplices.map((a) => [a, this.told.get(a)!] as const)]);
+    // Try every subset of the ring that deals; take the first that lands me in the suite.
+    const members = [...this.ring];
+    let best: Set<PartyId> | null = null;
+    for (let mask = (1 << members.length) - 1; mask >= 0 && best === null; mask--) {
+      const dealing = new Set(members.filter((_, i) => mask & (1 << i)));
+      let total = honestTotal;
+      for (const m of dealing) total += picks.get(m)!;
+      if (arrangement(combine([total]))[this.id] === 'master') best = dealing;
+    }
+    const everyone = new Set(members);
+    const wouldGet = arrangement(combine([honestTotal + [...everyone].reduce((s, m) => s + picks.get(m)!, 0n)]))[this.id]!;
+    const plan = best ?? everyone;
+    const choice = ctx.decide({
+      kind: 'withhold',
+      prompt: `${PARTY_NAMES[this.id]} has rebuilt everyone's number before the reveal`,
+      options: [
+        { id: 'deal', label: 'deal my shares and let the round run', honest: true },
+        { id: 'withhold', label: 'go silent before dealing, so my number is left out', honest: false },
+      ],
+      context: { wouldGet, wouldWin: wouldGet === 'master', plan: plan.has(this.id) ? 'deal' : 'withhold', ringWins: best !== null },
+    });
+    for (const a of accomplices) ctx.send(a, { kind: 'plan', deal: plan.has(a) });
+    this.followPlan(ctx, choice === 'deal');
+  }
+
+  protected followPlan(ctx: Ctx, deal: boolean): void {
+    if (deal) {
+      this.dealShares(ctx);
+      this.maybeReveal(ctx);
+    } else {
+      this.state.note = 'going silent before dealing: my number will be left out, and I already know the result';
+      ctx.abort();
+    }
   }
 
   /** Decision 'deal': shares from the committed/one polynomial, or from two different ones. */
@@ -542,6 +670,13 @@ export class SharedParty extends BaseParty {
         return true;
       }
       case 'deal': {
+        if (this.waitingToDeal && !this.dealt && !this.planned) {
+          // Nothing more is coming: deal now rather than be left out.
+          this.planned = true;
+          this.dealShares(ctx);
+          this.maybeReveal(ctx);
+          return true;
+        }
         const silent = this.active().filter((p) => this.heldFrom(p) === undefined);
         if (silent.length === 0) return false;
         this.state.excluded.push(...silent);

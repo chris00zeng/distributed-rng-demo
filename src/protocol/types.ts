@@ -44,7 +44,13 @@ export type Msg =
   /** Rung 5+: I have checked every share I hold; here is who I complained about. */
   | { kind: 'checked'; complaints: PartyId[] }
   /** Rung 5+: a dealer answers a complaint by publishing that recipient's share. */
-  | { kind: 'publishShare'; x: number; y: Scalar };
+  | { kind: 'publishShare'; x: number; y: Scalar }
+  /** Collusion: an accomplice forwards a share it holds to the ringleader (private). */
+  | { kind: 'forward'; dealer: PartyId; x: number; y: Scalar }
+  /** Collusion: an accomplice tells the ringleader its own pick (private). */
+  | { kind: 'tell'; value: Scalar }
+  /** Collusion: the ringleader tells an accomplice whether to deal or go silent (private). */
+  | { kind: 'plan'; deal: boolean };
 
 export interface Envelope {
   /** One seq per logical send; a broadcast fans out into envelopes sharing it. */
