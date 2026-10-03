@@ -146,12 +146,12 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** On rung 4 the two reconstructions visibly give two intercepts; on rung 5 the bad share is marked before reveal. Toggle shows real values that match the timeline.
 - **Estimate:** 40 min · **Actual:** 25 min (rung 3 geometry and toggle; the rung 4 two-intercept and rung 5 ✗ marks are wired as props for PR7/PR8 to feed)
 
-### PR10 — Rung 6 explainer: threshold slider and phase chart  `[ ]`
+### PR10 — Rung 6 explainer: threshold slider and phase chart  `[x]`
 - **Goal:** End the ladder on the limit.
 - **Covers:** R4a
 - **Scope:** `t` slider (2 to 4), SVG *t*-versus-*f* grid coloured by the two inequalities (secrecy *t* ≥ *f*+1, liveness *n*−*f* ≥ *t*), rung 6 copy with the *n* ≥ 2*f*+1 conclusion, and a pointer to the Sandbox for the live version. The rung runs honest `shared` with `verify=true` and the chosen *t* so the step-through still works.
 - **Verify:** Dragging *t* recolours the grid; no *t* is safe at *f* = 2 with *n* = 4; copy reads in 30 seconds.
-- **Estimate:** 30 min · **Actual:** —
+- **Estimate:** 30 min · **Actual:** 20 min
 
 ### PR11 — Shareable URLs  `[x]`
 - **Goal:** Reproduce any run from a link.
@@ -215,7 +215,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR7 | 25 min | 30 min | D11 replaced by D25; rung 4 = 100% for both attacks; `void` event |
 | PR8 | 45 min | 48 min | Rung 5 1,000 rounds: 3.4 s serial in Node, 1.46 s in the browser with the worker pool (15 cores) |
 | PR9 | 40 min | 25 min | Lane A, parallel with PR16; god-view pools each roommate's held share; math toggle hides hex via CSS hooks |
-| PR10 | 30 min | — | |
+| PR10 | 30 min | 20 min | Phase chart from the two inequalities; t = 4 + quitter shows liveness failing live |
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
 | PR16 | 60 min | 25 min | Roles are policies; decision events logged after their trigger; Dave-only move box |
@@ -238,6 +238,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR10 done. The ladder now ends on the limit: a t slider, the t-versus-f phase chart, and a live liveness failure (t = 4, Dave quits: he wins or nobody gets a room). Rung 6 offers only honest and quitter roles; the colluder role waits for the Sandbox, which is cut.
 - 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.
 - 2026-10-02: PR16 done. Decision events are queued and logged right after the event that triggered them, so panel snapshots at a decision step show what the party knew when deciding. The move box is Dave-only (`playable` prop) for the ladder.

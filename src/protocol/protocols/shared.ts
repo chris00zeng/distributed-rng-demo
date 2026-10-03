@@ -497,7 +497,10 @@ export class SharedParty extends BaseParty {
         ? [...(this.pool.get(d) ?? [])].filter((s) => s.x !== mine?.x).concat(mine ? [mine] : [])
         : this.poolWithMine(d);
       const expected = this.active().filter((p) => p !== d).length;
-      if (shares.length < this.t) continue;
+      if (shares.length < this.t) {
+        if (force) this.state.note = `only ${shares.length} of the ${this.t} shares needed to rebuild ${PARTY_NAMES[d]}'s number: stuck`;
+        continue;
+      }
       if (shares.length < expected && !force) continue;
       if (!isConsistent(shares, this.t)) {
         this.state.note = `${PARTY_NAMES[d]}'s shares do not add up: someone lied, and I cannot tell who`;
