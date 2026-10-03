@@ -66,7 +66,7 @@ No backend, no LLM, no analytics. The deployed artefact is `dist/` from `vite bu
 | `crypto/commit` | `H(value ‖ nonce)` commitments and opening check. | R1, R5 |
 | `crypto/shuffle` | SHA-256-seeded byte stream → rejection-sampled uniform indices → Fisher–Yates permutation of the four rooms. | R5, R10 |
 | `crypto/prng` | Seeded PRNG (sfc32 seeded from a string) for all demo randomness. | R5, R13 |
-| `protocol/bus` | `send`, `deliverNext`, `pending`. Deterministic delivery order from the seed. Supports dropping a party's outbound messages. | R7, R2 |
+| `protocol/bus` | `send`, `deliverNext`, `pending`. Breadth-first delivery, deterministic order from the seed. Supports dropping a party's outbound messages. | R7, R2 |
 | `protocol/party` | Party interface: `onStart`, `onMessage`, `view()`. Honest implementation for each protocol. | R6 |
 | `protocol/protocols` | Four protocols: `trusted` (rung 0), `announce` (rung 1), `commitReveal` (rung 2), `sharedCommitReveal({ verify, t })` (rungs 3 to 6). | R1, R2, R3, R4a, R4b |
 | `protocol/strategies` | Attack strategies as wrappers over the honest party, attachable to **any** party: `liar`, `lastMover`, `aborter`, `badDealer`, `fakeShare`, `colluder`. Plus `honestDropout` fault injection for any party. The ladder only ever attaches them to Dave (and Ben as accomplice); the Sandbox attaches them freely. | R8, R23 |
@@ -288,7 +288,7 @@ When the bus is empty and no consensus has been reached, the driver asks each li
 
 ### Deterministic ordering
 
-The bus holds a queue. `deliverNext` picks the next envelope by `(from-party order permuted per round by the PRNG, then seq)`. Broadcasts fan out into one envelope per recipient. Same seed, same scenario → byte-identical `RoundLog` (R13). Round *k* of a simulation uses seed `SHA-256(scenario.seed ‖ k)`.
+The bus holds a queue and delivers breadth-first: every envelope in flight lands before any envelope sent in response to one of them. Each envelope is stamped with a generation (sends made while handling a generation-*g* delivery are generation *g*+1) and `deliverNext` picks the next envelope by `(generation, from-party order permuted per round by the PRNG, then seq)`. So on rung 2 all four commits land before any reveal, rather than the first recipient of the last commit revealing before that commit has reached the others. Broadcasts fan out into one envelope per recipient. Same seed, same scenario → byte-identical `RoundLog` (R13). Round *k* of a simulation uses seed `SHA-256(scenario.seed ‖ k)`.
 
 ### Simulation loop
 

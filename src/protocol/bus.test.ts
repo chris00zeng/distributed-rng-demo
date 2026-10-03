@@ -26,6 +26,20 @@ describe('bus', () => {
     expect(got).toEqual(expected);
   });
 
+  it('delivers everything in flight before anything sent in response (breadth-first)', () => {
+    const bus = new Bus(makePrng('bfs'));
+    for (const p of [0, 1, 2, 3] as const) bus.send(p, 'all', { kind: 'announce', value: 1n });
+    const gens: number[] = [];
+    for (let e = bus.deliverNext(); e; e = bus.deliverNext()) {
+      gens.push(Number(e.msg.kind === 'announce' ? e.msg.value : -1n));
+      // Each recipient answers every first-wave message it sees; none of those answers
+      // may arrive before the first wave has fully landed.
+      if (e.msg.kind === 'announce' && e.msg.value === 1n) bus.send(e.to, 'all', { kind: 'announce', value: 2n });
+    }
+    expect(gens.slice(0, 12)).toEqual(Array(12).fill(1));
+    expect(gens.slice(12)).toEqual(Array(36).fill(2));
+  });
+
   it('drop keeps in-flight messages but discards future ones from that party', () => {
     const bus = new Bus(makePrng('drop'));
     bus.send(2, 'all', { kind: 'announce', value: 1n });
