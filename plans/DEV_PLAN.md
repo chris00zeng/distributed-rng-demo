@@ -202,6 +202,7 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Pin honest, pin two aborters, pin colluders; three charts, correctly labelled, until reload.
 - **Estimate:** 30 min · **Actual:** —
 
+### PR14 — Final rationale, time log, submission  `[ ]` (draft PR open; author to edit the voice, record the video, export transcripts)
 ### PR17 — Copy and quick wins  `[x]`
 - **Goal:** The product reads as a story about levels and a villain, and the cryptography toggle visibly does something.
 - **Covers:** R10, R11, R14, R24, R25
@@ -255,6 +256,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR18 | 110 min | 45 min | Stage with corner cards and per-message arrows; change flash; auto-play pauses at Dave's move |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
+| PR14 | 30 min | 20 min (draft) | RATIONALE.md drafted from the plan docs; README "What you can do" |
 | PR19 | 15 min | 10 min | n selector on the phase chart, display only |
 | PR20 | 45 min | 35 min | Collusion engine; two quitters do not deadlock (blink rule); colluders ≈ 68% not 100% |
 | PR17 | 70 min | 35 min | Level wording, story beats, cryptography toggle with friendly words, chip initials |
@@ -277,6 +279,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 
 ## Changelog
 - 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
+- 2026-10-02: Wall-clock build time after the review pass: about 8.6 h (ladder 4.5 h, polish and Sandbox 4.1 h); stated in RATIONALE.md.
 - 2026-10-02: Integration branch polish from user review: stage message box in its own grid cell (no overlap), room names coloured in text, casing pass, "Rooms assigned" one per line, and the `manual` "You play Dave" role (R27a). 138 tests.
 - 2026-10-02: PR21 done (Sandbox tab). Built on the PR20 branch; opened against main.
 - 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
