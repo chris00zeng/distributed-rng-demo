@@ -14,7 +14,8 @@ export const N_PARTIES = 4;
 
 export type Rung = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-export type Role = 'honest' | 'liar' | 'lastMover' | 'aborter' | 'badDealer' | 'fakeShare' | 'colluder';
+/** `manual`: the user plays this roommate; every decision waits for a choice (honest by default in bulk runs). */
+export type Role = 'honest' | 'liar' | 'lastMover' | 'aborter' | 'badDealer' | 'fakeShare' | 'colluder' | 'manual';
 
 export type ProtocolConfig =
   | { kind: 'trusted' }                               // rung 0; dealer is Dave
@@ -167,7 +168,9 @@ export type Event =
   /** An honest party found the round unrecoverable and called it void: restart. */
   | { kind: 'void'; by: PartyId; reason: string }
   /** A party chose at a decision point. `index` is its ordinal within the round, for overrides. */
-  | { kind: 'decision'; by: PartyId; index: number; point: DecisionPoint; chosen: string; deviates: boolean }
+  | { kind: 'decision'; by: PartyId; index: number; point: DecisionPoint; chosen: string; deviates: boolean;
+      /** The roommate is played by the user and no choice has been made yet (the honest option stands in). */
+      manual?: boolean }
   | { kind: 'outcome'; assignment: Record<PartyId, Room> }
   | { kind: 'stuck'; reason: string };
 

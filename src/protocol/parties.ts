@@ -17,10 +17,14 @@ export function createParty(scenario: Scenario, id: PartyId): Party {
 
 /** Roles the pickers offer for a party under a protocol (Technical Plan D20). */
 export function rolesFor(protocol: ProtocolConfig, id: PartyId): Role[] {
-  switch (protocol.kind) {
-    case 'trusted': return id === DAVE ? TRUSTED_ROLES.dealer : TRUSTED_ROLES.other;
-    case 'announce': return ANNOUNCE_ROLES;
-    case 'commitReveal': return COMMIT_REVEAL_ROLES;
-    case 'shared': return SHARED_ROLES;
-  }
+  const base = (() => {
+    switch (protocol.kind) {
+      case 'trusted': return id === DAVE ? TRUSTED_ROLES.dealer : TRUSTED_ROLES.other;
+      case 'announce': return ANNOUNCE_ROLES;
+      case 'commitReveal': return COMMIT_REVEAL_ROLES;
+      case 'shared': return SHARED_ROLES;
+    }
+  })();
+  // Any roommate with at least one real decision can be played by the user.
+  return base.length > 1 ? [...base, 'manual'] : base;
 }

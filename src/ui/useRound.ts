@@ -10,7 +10,9 @@ import type { Scenario } from '../protocol/types';
 export function useRound(scenario: Scenario) {
   const [overrides, setOverrides] = useState<Record<number, string>>({});
   const { log, result } = useMemo(() => runRound(scenario, { record: true, overrides }), [scenario, overrides]);
-  const last = log.events.length - 1;
+  // A roommate played by the user: the round waits at the first decision without a choice.
+  const pendingManual = log.events.findIndex((e) => e.kind === 'decision' && e.manual);
+  const last = pendingManual >= 0 ? pendingManual : log.events.length - 1;
   const [step, setStepRaw] = useState(0);
 
   useEffect(() => { setStepRaw(0); setOverrides({}); }, [scenario]);
@@ -58,5 +60,7 @@ export function useRound(scenario: Scenario) {
     prevViews: clamped > 0 ? log.views[clamped - 1] : undefined,
     setStep, next, prev, reset, end, nextPhase,
     overrides, override, clearOverrides,
+    /** True while the user's roommate has an unmade decision. */
+    awaitingYou: pendingManual >= 0,
   };
 }

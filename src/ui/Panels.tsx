@@ -92,16 +92,16 @@ function DecisionBox({ decision, onOverride }: { decision: Decision; onOverride?
   const ctx = decision.point.context ?? {};
   const wouldGet = typeof ctx.wouldGet === 'string' ? roomLabel(ctx.wouldGet) : null;
   return (
-    <div className={`decision${decision.deviates ? ' decision--deviates' : ''}`} role="group" aria-label={`${name(decision.by)}'s move`}>
+    <div className={`decision${decision.deviates ? ' decision--deviates' : ''}${decision.manual ? ' decision--manual' : ''}`} role="group" aria-label={`${name(decision.by)}'s move`}>
       <p className="decision__prompt">
-        <strong>{name(decision.by)}'s move.</strong> {decision.point.prompt}
+        <strong>{decision.manual ? `Your move as ${name(decision.by)}.` : `${name(decision.by)}'s move.`}</strong> {decision.point.prompt}
         {wouldGet ? <>. {name(decision.by)} would get {withRoomNames(wouldGet)}</> : null}.
         {ctx.ifQuit === 'reconstructed' ? ' If he quits, the others rebuild his number anyway.' : ''}
         {ctx.ifQuit === 'restart' ? ' If he quits, his shares will not add up and the round restarts.' : ''}
       </p>
       <div className="decision__options">
         {decision.point.options.map((o) => {
-          const taken = o.id === decision.chosen;
+          const taken = !decision.manual && o.id === decision.chosen;
           return (
             <button
               key={o.id}
@@ -117,7 +117,9 @@ function DecisionBox({ decision, onOverride }: { decision: Decision; onOverride?
           );
         })}
       </div>
-      <p className="decision__hint">{decision.deviates ? 'This is a deviation from the honest protocol.' : 'This is the honest move. Pick another to see what happens.'}</p>
+      <p className="decision__hint">
+        {decision.manual ? 'The round waits for you. Choose one to continue.' : decision.deviates ? 'This is a deviation from the honest protocol.' : 'This is the honest move. Pick another to see what happens.'}
+      </p>
     </div>
   );
 }

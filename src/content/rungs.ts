@@ -27,6 +27,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   badDealer: 'deals shares that do not add up',
   fakeShare: 'forges a share the moment Ana\'s phone dies',
   colluder: 'colludes with Ben',
+  manual: 'you decide every move',
 };
 
 export const RUNGS: readonly RungCopy[] = [

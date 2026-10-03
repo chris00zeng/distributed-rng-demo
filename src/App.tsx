@@ -158,7 +158,7 @@ export function App() {
           <span>{PARTY_NAMES[DAVE]}</span>
           <select value={daveRole} onChange={(e) => setDaveRole(e.target.value as Role)}>
             {roles.map((role) => (
-              <option key={role} value={role}>{cap(ROLE_LABELS[role])}</option>
+              <option key={role} value={role}>{role === 'manual' ? `You play ${PARTY_NAMES[DAVE]}` : cap(ROLE_LABELS[role])}</option>
             ))}
           </select>
         </label>
@@ -251,6 +251,9 @@ export function App() {
         </section>
       ) : (
         <section className="view view--sim" aria-label="Fairness over many rounds">
+          {daveRole === 'manual' ? (
+            <p className="sandbox__lead">You play {PARTY_NAMES[DAVE]} one round at a time. Over 1,000 rounds he plays honestly.</p>
+          ) : null}
           <p className="headline" aria-live="polite">
             {allStuck ? (
               <>Every round got stuck: with t = {t ?? 2}, one missing roommate leaves too few shares to rebuild anyone. Nobody gets a room.</>

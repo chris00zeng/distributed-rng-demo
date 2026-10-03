@@ -128,7 +128,7 @@ export function Sandbox() {
             <span>{PARTY_NAMES[p]}</span>
             <select value={draft.roles[p]} onChange={(ev) => update({ roles: { ...draft.roles, [p]: ev.target.value as Role } })}>
               {rolesFor(protocol, p).map((role) => (
-                <option key={role} value={role}>{cap(ROLE_LABELS[role])}</option>
+                <option key={role} value={role}>{role === 'manual' ? `You play ${PARTY_NAMES[p]}` : cap(ROLE_LABELS[role])}</option>
               ))}
             </select>
           </label>
@@ -179,6 +179,9 @@ export function Sandbox() {
         </div>
       ) : (
         <div className="view view--sim">
+          {PARTY_IDS.some((p) => scenario.roles[p] === 'manual') ? (
+            <p className="sandbox__lead">Roommates you play act honestly over 1,000 rounds; your moves apply to the single round.</p>
+          ) : null}
           <p className="headline" aria-live="polite">
             {tally === null ? (
               <>Measuring…</>
