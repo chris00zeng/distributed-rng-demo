@@ -503,10 +503,18 @@ button.rung:disabled {
 .fp__tiny { fill: var(--fg); font-size: 8px; opacity: 0.75; }
 .fp__tiny--hall { font-size: 8px; }
 .fp__who { fill: #fff; font-size: 20px; font-weight: 800; paint-order: stroke; stroke: rgba(0,0,0,0.35); stroke-width: 3px; }
-.fp__who--mini { font-size: 44px; }
 
-/* Arrangement grid */
+/* Arrangement grid: one room-coloured chip per roommate, sized by room */
 .agrid { margin: 0 0 1.5rem; }
+.agrid__names { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem; margin: 0 0 0.5rem; }
+.agrid__name {
+  font: inherit; font-size: 0.85rem; font-weight: 600;
+  padding: 0.15rem 0.55rem; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent);
+  background: transparent; color: var(--fg); cursor: default;
+}
+.agrid__name--on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.agrid__hint { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
 .agrid__cells {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -517,14 +525,31 @@ button.rung:disabled {
 .agrid__cell {
   position: relative;
   border-radius: 8px;
-  padding: 0.3rem;
+  padding: 0.4rem 0.3rem 0.3rem;
   background: var(--rung-bg);
   border: 2px solid transparent;
-  transition: opacity 150ms ease;
+  opacity: var(--shade, 1);
+  transition: opacity 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 .agrid__cell--hit { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); opacity: 1 !important; }
 .agrid__cell--never { filter: saturate(0.2); }
-.agrid__num { display: block; text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; font-variant-numeric: tabular-nums; }
+.agrid__chips { display: flex; align-items: center; justify-content: center; gap: 0.3rem; height: 1.25rem; }
+.agrid__chip { display: inline-block; border-radius: 3px; transition: opacity 150ms ease, transform 150ms ease; }
+.agrid__chip--master { width: 1.15rem; height: 1.15rem; border-radius: 4px; }
+.agrid__chip--decent { width: 0.9rem; height: 0.9rem; }
+.agrid__chip--small  { width: 0.7rem; height: 0.7rem; }
+.agrid__chip--closet { width: 0.5rem; height: 0.5rem; border-radius: 2px; }
+.agrid__chip--dim { opacity: 0.22; }
+/* Focus on one roommate: their winning cells light up in the suite's colour, the rest fade back. */
+.agrid--focus .agrid__cell:not(.agrid__cell--win):not(.agrid__cell--hit) { opacity: calc(var(--shade, 1) * 0.45); }
+.agrid__cell--win {
+  border-color: #c2410c;
+  background: color-mix(in srgb, #c2410c 16%, var(--rung-bg));
+  opacity: 1 !important;
+  filter: none;
+}
+.agrid__cell--win .agrid__chip:not(.agrid__chip--dim) { transform: scale(1.15); }
+.agrid__num { display: block; text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; font-variant-numeric: tabular-nums; }
 .agrid__num small { color: var(--fg); font-weight: 600; }
 .agrid__caption { margin-top: 0.5rem; color: var(--muted); font-size: 0.9rem; }
 
