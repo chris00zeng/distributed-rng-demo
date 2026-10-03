@@ -116,6 +116,32 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Verify:** Deployed; on rung 2 make an honest Dave quit and watch the restart; on rung 3 make him quit and watch it change nothing.
 - **Estimate:** 60 min · **Actual:** 25 min
 
+### PR19 — Roommate-count selector on the level 6 phase chart  `[x]`
+- **Goal:** Answer "what if there were more of us?" without changing the live cast.
+- **Covers:** R4a
+- **Scope:** `ThresholdChart` gains a 3 to 7 selector that redraws the chart from `regime(n, t, f)` and states the most cheaters n roommates can tolerate; the t highlight and click-to-set apply only when charting the live house of four. No engine change.
+- **Verify:** Choose 5: two cheaters have a safe row; choose 7: three do; back to 4: the t cursor returns.
+- **Estimate:** 15 min · **Actual:** 10 min
+### PR21 — Sandbox tab  `[x]`
+- **Goal:** Let the reviewer break it themselves: four one-click experiments, then free-form controls.
+- **Covers:** R23 (UI half), R8 (all roles for every roommate)
+- **Scope:** `ui/Sandbox.tsx`: experiment cards (question, Run it, expectation), protocol-by-level picker, a role dropdown per roommate filtered by `rolesFor`, dead-phone picker, t slider for shared protocols, seed, "Everyone honest" reset, the same step/simulation views as the ladder with every roommate's moves playable; a flask button at the end of the level nav opens it, choosing a level closes it. App change kept to the nav button and a wrapper. No pin-and-compare (stretch).
+- **Verify:** Deployed; the four experiments run from the tab and match the presets' expectations; custom roles change the chart.
+- **Estimate:** 45 min · **Actual:** 30 min
+
+### PR20 — Collusion engine and Sandbox experiments (data)  `[x]`
+- **Goal:** The one attack the ladder describes but never shows, measured; plus the four experiment presets the Sandbox tab will offer.
+- **Covers:** R23 (engine half), R4b · D28
+- **Scope:** `forward` / `tell` / `plan` messages; `dealTiming`, `leak`, `withhold` decision points in the shared protocol; colluder policy (wait, forward, follow the leader's plan); `protocol/experiments.ts` presets with questions and expectations. No UI (the Sandbox tab follows once the two open UI lanes land, to avoid App conflicts).
+- **Verify:** Tests: two colluders at t = 2 ≈ 68%, at t = 3 fair with no peek; lone colluder fair; two quitters split the suite; dead phone at t = 4 stuck every round; levels 3 and 5 unchanged.
+- **Estimate:** 45 min · **Actual:** 35 min
+### PR18 — Stage view: cards at four corners, arrows per message, change flash, auto-play  `[x]`
+- **Goal:** Make the step-through something you watch: who is talking to whom, what each roommate just learned.
+- **Covers:** R6, R7 · D2, D17
+- **Scope:** `ui/Stage` places the four `RoommateCard`s (refactored out of `Panels`) at the corners of a 2×2 grid with an SVG overlay; the current logical message is drawn as a line per recipient (delivered solid with a travelling dot, pending dashed), broadcasts fan out, the centre shows the phase, the event in words and the result once known; abort/void/stuck/drop/start become a centred banner; a dropped roommate's card dims; the deciding card is outlined. `ui/panelDiff` flags facts that changed since the previous step; cards flash them (`fact--changed`) and a changed note. `ui/useAutoplay`: play/pause with 0.5/1/2 s per step, pauses by itself at Dave's decision, stops at the end, Space toggles. The sequence-diagram timeline moves under a collapsed "Message history". Phone width: cards stack, overlay hidden. `prefers-reduced-motion` respected.
+- **Verify:** Level 2, Dave quitting: arrows follow each message and the reveal fans out as three; changed facts flash; auto-play started two steps before Dave's decision stops exactly on it with his move box showing.
+- **Estimate:** 110 min · **Actual:** 45 min
+
 ### PR6 — P0 wrap: README, rationale draft, time log  `[ ]`
 - **Goal:** P0 is submittable as-is.
 - **Covers:** R18, R19 (draft), R22
@@ -177,6 +203,14 @@ The critical path is PR1 → PR2 → PR3 → PR5 → PR8 → PR12 → PR13 → P
 - **Estimate:** 30 min · **Actual:** —
 
 ### PR14 — Final rationale, time log, submission  `[ ]` (draft PR open; author to edit the voice, record the video, export transcripts)
+### PR17 — Copy and quick wins  `[x]`
+- **Goal:** The product reads as a story about levels and a villain, and the cryptography toggle visibly does something.
+- **Covers:** R10, R11, R14, R24, R25
+- **Scope:** "Rung" → "Level" in every user-facing string (code and plan docs keep "rung"); a `story` beat per level in the roommates' voice with Dave as the villain, plus sharper role labels and intro; "show the math" → "show the cryptography" backed by a module-level `mathMode` flag that `panelFacts` and `format` consult, so the panels and timeline say "sealed", "a share", "17 (padded)" when off and show hashes, nonces, share values, curve points and padding when on; roommate initials inside the arrangement chips. Tests: both toggle states, every level has a story, no "rung" in user-facing copy.
+- **Verify:** Level heading with its story; toggle off reads in plain words, on shows hex; chips show Z A B D.
+- **Estimate:** 70 min · **Actual:** 35 min
+
+### PR14 — Final rationale, time log, submission  `[ ]`
 - **Goal:** Everything the brief asks for, honestly reported.
 - **Covers:** R19, R20 (script), R21, R22
 - **Scope:** `RATIONALE.md` final: both themes and why, the prior-work link, the core insight as the non-obvious part, decisions D1 to D20 distilled to the ones that mattered, the three limitations, the four extensions, total time from this doc. Video outline (5 beats: thesis, rung 2, rung 3, rung 5, rung 6 wall) kept in `RATIONALE.md`. Transcript export checklist. README final.
@@ -219,9 +253,15 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | PR11 | 15 min | 15 min | Lane C, parallel with PR4/PR5; 8 tests on encode/decode |
 | PR15 | 60 min | 70 min | Arrangements replace shuffle; intro + floorplan + grid + view toggle; chunk yield moved off setTimeout |
 | PR16 | 60 min | 25 min | Roles are policies; decision events logged after their trigger; Dave-only move box |
+| PR18 | 110 min | 45 min | Stage with corner cards and per-message arrows; change flash; auto-play pauses at Dave's move |
 | PR12 | 60 min | — | |
 | PR13 | 30 min | — | |
 | PR14 | 30 min | 20 min (draft) | RATIONALE.md drafted from the plan docs; README "What you can do" |
+| PR19 | 15 min | 10 min | n selector on the phase chart, display only |
+| PR20 | 45 min | 35 min | Collusion engine; two quitters do not deadlock (blink rule); colluders ≈ 68% not 100% |
+| PR17 | 70 min | 35 min | Level wording, story beats, cryptography toggle with friendly words, chip initials |
+| PR21 | 45 min | 30 min | Sandbox tab with four experiments and per-roommate roles; every roommate playable |
+| PR14 | 30 min | — | |
 | Video | 30 min | — | |
 
 ## Deliverables outside code
@@ -238,6 +278,12 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 | Submission email | After video and transcripts: repo link, live link, transcripts, video, `RATIONALE.md` | Author |
 
 ## Changelog
+- 2026-10-02: PR19 done (n selector on the phase chart, user request; live cast stays at four, see the discussion recorded in the PRD changelog).
+- 2026-10-02: Integration branch polish from user review: stage message box in its own grid cell (no overlap), room names coloured in text, casing pass, "Rooms assigned" one per line, and the `manual` "You play Dave" role (R27a). 138 tests.
+- 2026-10-02: PR21 done (Sandbox tab). Built on the PR20 branch; opened against main.
+- 2026-10-02: PR20 done (collusion engine, experiment presets). Two findings corrected in the PRD and Technical Plan: colluders get ≈ 68%, not 100% (picks are committed before shares are dealt), and two quitters split the suite rather than deadlock (the blink rule).
+- 2026-10-02: PR17 done (user feedback batch, parallel with PR18 stage view). Levels, story beats, villain Dave, "show the cryptography" that changes wording rather than hiding rows, initials on chips.
+- 2026-10-02: PR18 done (user feedback items 3, 4, 5). Stage view replaces the two-column panels/timeline layout in the step view; the timeline survives as collapsed history.
 - 2026-10-02: PR10 done. The ladder now ends on the limit: a t slider, the t-versus-f phase chart, and a live liveness failure (t = 4, Dave quits: he wins or nobody gets a room). Rung 6 offers only honest and quitter roles; the colluder role waits for the Sandbox, which is cut.
 - 2026-10-02: PR8b done. Rung 5 wired: Feldman commitments carried as bytes plus decoded points, padded picks, a complaint phase before any reveal, verified reconstruction shares, one aggregate reveal check per party. First cut ran 7.2 s per 1,000 rounds; dropping a weighted batch check (slower than per-share checks), skipping decompression and aggregating the reveal check brought it to 3.4 s serial, and the D13 fallback (a pool of Web Workers splitting the rounds) to 1.46 s in the browser. Also fixed an idle-ordering race: the party in the earliest phase now gets its idle turn first.
 - 2026-10-02: PR7 done. Found that the planned fake-share attack was impossible under D11 (Dave's share never among the lowest two); replaced with D25 (check all shares, void on disagreement), which also corrects rung 4's PRD outcome from ≈44% to 100%. Proposed PRD/Tech Plan amendments ride in the PR.
@@ -247,6 +293,7 @@ Filled in as PRs land. The rationale's "time spent" is the sum of this column pl
 - 2026-10-02: PR8a (crypto half of PR8, parallel lane): `crypto/feldman` (commitments, share verification, opening, byte encoding) and `crypto/padding` (D23) with 14 tests; Node benchmark for 1,000 rounds of commit + verify recorded in the PR. PR8 itself stays open for the protocol wiring.
 - 2026-10-02: PR15 done. Simulation chunks now yield via `scheduler.yield`/MessageChannel instead of `setTimeout(0)`: background tabs clamp timers to 1 s, which made a run look 30× slower than it was.
 - 2026-10-02: User feedback after P0 code landed: added PR15 (explainer polish) and PR16 (Dave's decision points) to M2 ahead of P1; PR7/PR8 now depend on PR16. Budget: P0 ≈ 5.9 h incl. rationale draft, P1 would reach ≈ 8.5 h, so the Sandbox (PR12/13) is cut unless actuals keep beating estimates (so far 1.7 h actual vs 3.4 h estimated).
+- 2026-10-02: Bus delivery made breadth-first (generation, then seeded sender order, then seq). Stepping rung 2 used to show the first recipient of the last commit sending all its reveals before that commit reached the other two; now every commit lands before any reveal (user request). Technical Plan bus section updated.
 - 2026-10-02: Initial draft from the approved PRD and Technical Plan. Flags that P0 + P1 + P2 + video totals ≈ 8.5 h, so P2 is conditional on checkpoints.
 - 2026-10-02: Approved. PRD scope table refreshed to match.
 - 2026-10-02: PR4 done (parallel lane A). Panels, SVG sequence-diagram timeline grouped by broadcast, step controls with "next phase" and arrow keys; leak test over rungs 0 to 2 and every Dave role.

@@ -16,10 +16,10 @@ export function regime(n: number, t: number, f: number): Regime {
 }
 
 export const REGIME_LABELS: Record<Regime, { title: string; blurb: string }> = {
-  safe: { title: 'safe', blurb: 'f cheaters can neither peek nor block' },
-  leaky: { title: 'leaky', blurb: 'f colluders can rebuild everyone’s number early and steer the result' },
-  stuck: { title: 'stuck', blurb: 'f dead phones leave too few shares to rebuild anyone' },
-  broken: { title: 'broken', blurb: 'both: too few shares to rebuild, and colluders can still peek' },
+  safe: { title: 'Safe', blurb: 'f cheaters can neither peek nor block' },
+  leaky: { title: 'Leaky', blurb: 'f colluders can rebuild everyone’s number early and steer the result' },
+  stuck: { title: 'Stuck', blurb: 'f dead phones leave too few shares to rebuild anyone' },
+  broken: { title: 'Broken', blurb: 'both: too few shares to rebuild, and colluders can still peek' },
 };
 
 /** Largest f that is safe for some t, i.e. the most cheaters n roommates can tolerate. */

@@ -27,6 +27,7 @@ export const ROLE_LETTERS: Record<Role, string> = {
   badDealer: 'b',
   fakeShare: 'f',
   colluder: 'c',
+  manual: 'y',
 };
 
 const LETTER_ROLES: Record<string, Role> = Object.fromEntries(

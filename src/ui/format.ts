@@ -1,6 +1,7 @@
 /** Plain-words formatting shared by panels, timeline and controls. */
 import { pickOf } from '../crypto/arrangements';
 import { ROOM_LABELS } from '../content/rooms';
+import { mathMode } from './mathMode';
 import { PARTY_IDS, PARTY_NAMES, type Event, type Msg, type PartyId, type Phase } from '../protocol/types';
 
 export { ROOM_LABELS };
@@ -15,13 +16,21 @@ export function name(p: PartyId): string {
 
 /**
  * A contribution in plain words. Picks (0..23) print as themselves. Anything
- * larger is a padded secret (rung 5+): the pick, then the padding in short hex
- * so the two parts stay visibly distinct (D23).
+ * larger is a padded secret (level 5+): the pick, then the padding in short hex
+ * so the two parts stay visibly distinct (D23). With the cryptography hidden,
+ * the padding is named but not shown.
  */
 export function shortScalar(s: bigint): string {
   if (s >= 0n && s < 24n) return s.toString();
+  if (!mathMode.get()) return `${pickOf(s)} (padded)`;
   const hex = s.toString(16).padStart(64, '0');
   return `${pickOf(s)} (+ padding ${hex.slice(0, 6)}…)`;
+}
+
+/** A commitment as the panels and timeline show it: hex when the cryptography is on, a word otherwise. */
+export function commitmentLabel(c: Uint8Array): string {
+  if (!mathMode.get()) return c.length > 32 ? 'sealed (curve points)' : 'sealed';
+  return c.length > 32 ? `${c.length / 32} curve points, ${shortBytes(c)}` : shortBytes(c);
 }
 
 /**
@@ -58,11 +67,14 @@ export function phaseLabel(phase: Phase | string): string {
 }
 
 export function msgLabel(msg: Msg): string {
+  const crypto = mathMode.get();
   switch (msg.kind) {
     case 'announce': return `announces ${shortScalar(msg.value)}`;
-    case 'commit': return msg.commitment.length > 32 ? 'commits (curve points)' : 'commits (hash)';
+    case 'commit':
+      if (!crypto) return 'commits (sealed)';
+      return msg.commitment.length > 32 ? 'commits (curve points)' : 'commits (hash)';
     case 'reveal': return `reveals ${shortScalar(msg.value)}`;
-    case 'share': return 'share';
+    case 'share': return crypto ? `share (x = ${msg.x})` : 'a share';
     case 'reconstructShare': return `share of ${name(msg.dealer)}'s number`;
     case 'complaint': return `complaint: ${name(msg.dealer)}'s share fails the check`;
     case 'checked': return msg.complaints.length ? 'checked shares: complaints' : 'checked shares: all good';

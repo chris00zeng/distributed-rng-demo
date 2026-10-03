@@ -66,7 +66,7 @@ No backend, no LLM, no analytics. The deployed artefact is `dist/` from `vite bu
 | `crypto/commit` | `H(value ‖ nonce)` commitments and opening check. | R1, R5 |
 | `crypto/shuffle` | SHA-256-seeded byte stream → rejection-sampled uniform indices → Fisher–Yates permutation of the four rooms. | R5, R10 |
 | `crypto/prng` | Seeded PRNG (sfc32 seeded from a string) for all demo randomness. | R5, R13 |
-| `protocol/bus` | `send`, `deliverNext`, `pending`. Deterministic delivery order from the seed. Supports dropping a party's outbound messages. | R7, R2 |
+| `protocol/bus` | `send`, `deliverNext`, `pending`. Breadth-first delivery, deterministic order from the seed. Supports dropping a party's outbound messages. | R7, R2 |
 | `protocol/party` | Party interface: `onStart`, `onMessage`, `view()`. Honest implementation for each protocol. | R6 |
 | `protocol/protocols` | Four protocols: `trusted` (rung 0), `announce` (rung 1), `commitReveal` (rung 2), `sharedCommitReveal({ verify, t })` (rungs 3 to 6). | R1, R2, R3, R4a, R4b |
 | `protocol/strategies` | Attack strategies as wrappers over the honest party, attachable to **any** party: `liar`, `lastMover`, `aborter`, `badDealer`, `fakeShare`, `colluder`. Plus `honestDropout` fault injection for any party. The ladder only ever attaches them to Dave (and Ben as accomplice); the Sandbox attaches them freely. | R8, R23 |
@@ -274,11 +274,11 @@ Strategies are per party, so combinations the ladder never shows can occur. The 
 
 | Combination | What happens | Reported as |
 |---|---|---|
-| Two or more `aborter`s on commit-reveal | Each aborts whenever they are not getting the master room. At most one can be satisfied, so the round restarts until the 64-attempt cap. | `stuck` (deadlock). The Sandbox copy says why. |
+| Two or more `aborter`s on commit-reveal | Both wait for the other to reveal; the idle rule makes one blink (reveal honestly), and he has thereby given up his chance to quit. The last to decide quits until he wins. | Measured (PR20): the quitters split the suite ~50/50 and the honest two never get it. Not a deadlock: the blink rule prevents it. |
 | Two `lastMover`s on announce | Each waits for everyone else; the bus delivers in seeded order, so one of them is genuinely last and wins. | Measured ≈ 100% for whichever is last per round. |
 | Two `badDealer`s | Each independently deals inconsistently and picks the better of their own A/B. Interactions are whatever the math gives. | Measured. |
 | `fakeShare` with no dropout | No reconstruction happens, so the strategy never fires. | Chart identical to honest; copy says "needs a dead phone". |
-| `colluder` on a single party | Nobody to pool with; plays honest. | Copy says "pick two". |
+| `colluder` on a single party | Nobody to pool with; deals immediately and plays honest. | Copy says "pick two". |
 | `liar` on a non-dealer under `trusted` | Only the dealer (Dave) rolls; others' roles are ignored. | `rolesFor` offers `liar` for Dave only. |
 | Any strategy under a protocol where it has no hook | Falls through to honest behaviour. | `rolesFor` hides it. |
 
@@ -288,7 +288,7 @@ When the bus is empty and no consensus has been reached, the driver asks each li
 
 ### Deterministic ordering
 
-The bus holds a queue. `deliverNext` picks the next envelope by `(from-party order permuted per round by the PRNG, then seq)`. Broadcasts fan out into one envelope per recipient. Same seed, same scenario → byte-identical `RoundLog` (R13). Round *k* of a simulation uses seed `SHA-256(scenario.seed ‖ k)`.
+The bus holds a queue and delivers breadth-first: every envelope in flight lands before any envelope sent in response to one of them. Each envelope is stamped with a generation (sends made while handling a generation-*g* delivery are generation *g*+1) and `deliverNext` picks the next envelope by `(generation, from-party order permuted per round by the PRNG, then seq)`. So on rung 2 all four commits land before any reveal, rather than the first recipient of the last commit revealing before that commit has reached the others. Broadcasts fan out into one envelope per recipient. Same seed, same scenario → byte-identical `RoundLog` (R13). Round *k* of a simulation uses seed `SHA-256(scenario.seed ‖ k)`.
 
 ### Simulation loop
 
@@ -317,6 +317,7 @@ The bus holds a queue. `deliverNext` picks the next envelope by `(from-party ord
 | D18 | Rung 0/1 cheats find a winning value by random search over candidates (new) | Back-solve from a chosen room | Honest about how the attack works; expected 4 tries, negligible cost. | Superseded by D22 |
 | D16 | App state in the query string: `?rung=2&roles=hhha&seed=…[&t=3][&drop=1]`, roles as one letter per roommate (h/l/m/a/b/f/c), params equal to defaults omitted, invalid values fall back to defaults (PLAN.md: shareable by URL) | Hash fragment; localStorage | Plain, copyable, GitHub Pages friendly. The ladder keys off the rung preset, so `rung=` replaces the earlier `p=`/`v=` protocol sketch; `t` and `drop` are reserved for the Sandbox. Pinned tallies are not in the URL. | Active |
 | D19 | `Scenario` carries a `ProtocolConfig` and a role per roommate from day one; the ladder uses presets (new, for R23) | Dave-only role, refactor later | Makes the Sandbox UI-only work and costs nothing now. | Active |
+| D28 | Collusion (PR20): colluders wait to deal (`dealTiming`), accomplices forward every honest share and their own pick to the ringleader (`leak`, `tell`), the leader rebuilds the honest picks early and chooses which ring members deal and which go silent before dealing (`withhold`, `plan`); a member who never deals is left out of the sum. Measured: two colluders at t = 2 give Dave ≈ 68% (best of 2⁴ outcomes), at t = 3 they cannot peek and play honest. | Let colluders also choose their picks last (100%) | The commit-then-deal ordering already prevents choosing last: every pick is committed before any share is dealt. The only lever left after peeking is to be left out, which is 1 − (3/4)^(2^k). This is what the implemented protocol allows, so it is what the demo shows; the PRD's "100%" was corrected. | Active |
 | D26 | Rung 5 checks reveals in aggregate: Σ value·G == Σ C₀, one base-point multiplication per party per round, with per-dealer `commitmentOpens` only when the aggregate fails (PR8b) | Per-dealer check always | Sound against one liar (the others' values are fixed); two colluders whose lies cancel leave the total, hence the outcome, unchanged. Cuts 12 base multiplications per round to 4. | Active |
 | D27 | Commit messages carry the decoded Feldman points beside the 32-byte wire form (PR8b) | Decompress on receipt | 24 decompressions per round were ~1 ms; the bytes remain the canonical message and the UI shows them. A real relay would decompress once. | Active |
 | D25 | Reconstruction uses every received share; more than *t* shares are checked for consistency and a disagreement voids the round (restart) (PR7) | Lowest-indexed *t* shares (D11) | Under D11 the fake-share attack was impossible (Dave's share never used). Checking is what any real implementation does; it makes rung 4 honest: detectable but not attributable, so "quit" is "restart" again and both attacks reach 100%. | Active |
@@ -362,6 +363,7 @@ None open. Resolved 2026-10-02:
 - **Rung 0 and 1 steering:** `liar` and `lastMover` search random candidate values until the permutation gives Dave the master room, expected 4 tries (D18).
 
 ## Changelog
+- 2026-10-02: PR20: collusion engine (D28) with `forward`/`tell`/`plan` messages and `dealTiming`/`leak`/`withhold` decision points; experiment presets; the D20 table corrected for two quitters (blink rule, no deadlock) and a lone colluder.
 - 2026-10-02: PR8b: rung 5 wired (complaint phase with `complaint`/`checked`/`publishShare` messages, `answerComplaint` decision point, verified reconstruction shares, padded picks). D13 refined to a worker pool; new D26 (aggregate reveal check) and D27 (points on the wire). Note: a weighted batch of share checks was tried and dropped: 64-bit weights make the cheap tiny-scalar multiplications expensive. Driver idle turns now go to the party in the earliest phase first.
 - 2026-10-02: PR7: D11 superseded by D25 (all shares used, inconsistency voids the round); `Ctx.void(reason)` and a `void` event; new decision points `deal`, `reconstructTiming`, `reconstructShare`; rung 4 outcome corrected to 100% in the verification table.
 - 2026-10-02: PR16 implemented D24. Decisions raised inside a handler are logged after the triggering event; decisions with a single option are not logged; hidden (honest, non-Dave) decisions fold into the previous timeline row. Panels expose `playable` (default Dave) for the Sandbox to widen.

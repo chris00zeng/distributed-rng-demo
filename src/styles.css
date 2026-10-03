@@ -625,3 +625,137 @@ button.rung:disabled {
 .phase__cell { fill: #fff; font-size: 12px; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,0.25); stroke-width: 2px; }
 .phase__cursor { fill: none; stroke: var(--fg); stroke-width: 2; }
 .phase__legend { display: grid; gap: 0.25rem; margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+
+/* ---------- PR19: roommate-count selector on the phase chart ---------- */
+.phase__n { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin: 0 0 0.6rem; font-size: 0.9rem; }
+.phase__n-label { color: var(--muted); }
+.phase__n-btn { font: inherit; font-weight: 600; width: 2rem; height: 2rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent); background: var(--rung-bg); color: var(--fg); cursor: pointer; }
+.phase__n-btn.is-on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.phase__n-note { flex-basis: 100%; color: var(--muted); }
+/* ---------- PR17: copy and quick wins ---------- */
+.rung-copy__story { margin: 0 0 0.75rem; max-width: 62ch; font-size: 1.02rem; }
+.agrid__chip { display: inline-flex; align-items: center; justify-content: center; color: #fff; font-style: normal; font-weight: 800; font-size: 0.62rem; line-height: 1; text-shadow: 0 1px 1px rgba(0,0,0,0.45); }
+/* ---------- PR18: stage view, change highlighting, auto-play ---------- */
+.stage {
+  position: relative;
+  display: grid;
+  /* Cards in the four corner cells; the message box has the middle cell to itself, so it can never overlap a card. */
+  grid-template-columns: minmax(0, 1fr) minmax(11rem, 18rem) minmax(0, 1fr);
+  grid-template-rows: auto minmax(3rem, auto) auto;
+  gap: 1.25rem 1rem;
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+  isolation: isolate;
+}
+.stage__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.stage__card { position: relative; z-index: 1; min-height: 11rem; }
+.stage__card--0 { grid-area: 1 / 1; }
+.stage__card--1 { grid-area: 1 / 3; }
+.stage__card--2 { grid-area: 3 / 1; }
+.stage__card--3 { grid-area: 3 / 3; }
+.stage__card--sending { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fg) 35%, transparent); }
+.stage__card--receiving { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent); }
+.panel--silent { opacity: 0.45; filter: saturate(0.3); }
+.stage__arrow line { stroke: var(--fg); stroke-width: 2.5px; }
+.stage__arrow--pending line { stroke-dasharray: 6 5; opacity: 0.35; }
+.stage__arrow--done line { opacity: 0.85; }
+.stage__dot { fill: var(--accent); stroke: var(--bg); stroke-width: 0.4; }
+.stage__centre {
+  grid-area: 2 / 2;
+  align-self: center;
+  justify-self: stretch;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  backdrop-filter: blur(4px);
+}
+.stage__centre--banner { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--bg)); }
+.stage__phase { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.2rem; }
+.stage__event { margin: 0; font-size: 0.95rem; }
+.stage__count { color: var(--muted); font-size: 0.85rem; }
+.stage__result { margin: 0.35rem 0 0; font-weight: 600; color: var(--accent); }
+.stage--decision .stage__centre { border-style: dashed; }
+
+/* The facts that changed in the last step flash, then settle. */
+@keyframes fact-flash {
+  0% { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+  100% { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+}
+.fact--changed { animation: fact-flash 1.2s ease-out forwards; border-radius: 4px; }
+.fact--changed dd { font-weight: 600; }
+.panel__note--changed { color: var(--accent); }
+
+/* Mid widths: two columns of cards with the message box spanning the row between them. */
+@media (max-width: 1000px) {
+  .stage { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; gap: 1rem; }
+  .stage__card--1 { grid-area: 1 / 2; }
+  .stage__card--2 { grid-area: 3 / 1; }
+  .stage__card--3 { grid-area: 3 / 2; }
+  .stage__centre { grid-area: 2 / 1 / 3 / 3; justify-self: center; width: min(100%, 28rem); }
+}
+
+/* History below the stage */
+.history { margin: 0 0 1.25rem; }
+.history__summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.5rem; }
+.history .timeline { max-width: 560px; }
+
+/* Auto-play controls */
+.steps__play { font-size: 0.8rem; min-width: 2.4rem; }
+.steps__play.is-playing { background: var(--accent); color: #fff; }
+.steps__speed { font: inherit; font-size: 0.85rem; color: var(--fg); background: var(--rung-bg); border: 1px solid transparent; border-radius: 6px; padding: 0.3rem 0.4rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage__dot { display: none; }
+  .fact--changed { animation: none; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+}
+@media (max-width: 900px) {
+  .stage { grid-template-columns: 1fr; gap: 0.75rem; }
+  .stage__centre { grid-area: auto; }
+  .stage__card--0, .stage__card--1, .stage__card--2, .stage__card--3 { grid-area: auto; }
+  .stage__overlay { display: none; }
+  .stage__centre { grid-area: auto; order: -1; margin-bottom: 0.5rem; }
+}
+/* ---------- PR21: Sandbox ---------- */
+.rung--sandbox { margin-left: 0.5rem; }
+.sandbox__title { margin: 0 0 0.25rem; font-size: 1.4rem; }
+.sandbox__lead { margin: 0 0 1rem; color: var(--muted); max-width: 70ch; }
+.experiments { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+.experiment { background: var(--rung-bg); border-radius: 10px; padding: 0.8rem 0.9rem; border: 2px solid transparent; }
+.experiment--on { border-color: var(--accent); }
+.experiment h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+.experiment__q { margin: 0 0 0.6rem; font-size: 0.9rem; }
+.experiment__expect { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--muted); }
+.sandbox__controls { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: end; margin-bottom: 0.75rem; }
+.control--role select { min-width: 12rem; }
+.sandbox__protocol { margin: 0 0 1rem; color: var(--muted); max-width: 80ch; }
+.sandbox__stat { margin-right: 0.6rem; }
+
+/* Room names in running text */
+.room-name { font-weight: 700; white-space: nowrap; }
+
+/* Rooms assigned, one roommate per line */
+.outcome__title { display: block; font-weight: 600; margin-bottom: 0.2rem; }
+.outcome__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; text-align: left; }
+.stage__centre .outcome__list { justify-content: center; }
+.stage__centre .outcome__title { text-align: center; }
+
+/* You play this roommate: the round waits here */
+.decision--manual { border-style: solid; border-width: 2px; border-color: var(--accent); }
+.decision--manual .decision__opt { border-color: var(--accent); }
+
+/* Direction of the current message, on the cards */
+.panel__head { flex-wrap: wrap; }
+.panel__traffic { flex-basis: 100%; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; margin-top: 0.15rem; }
+.panel__traffic--sending { color: var(--fg); }
+.panel__traffic--receiving { color: var(--accent); }

@@ -113,9 +113,11 @@ function runAttempt(
       if (point.options.length < 2) return point.options[0]?.id ?? '';
       const index = decisions.next++;
       const override = decisions.overrides[index];
-      const chosen = override !== undefined && hasOption(point, override) ? override : policyFor(scenario.roles[id])(point, id);
+      const overridden = override !== undefined && hasOption(point, override);
+      const chosen = overridden ? override : policyFor(scenario.roles[id])(point, id);
       const opt = point.options.find((o) => o.id === chosen) ?? point.options.find((o) => o.honest)!;
-      pendingDecisions.push({ kind: 'decision', by: id, index, point, chosen: opt.id, deviates: !opt.honest });
+      const manual = scenario.roles[id] === 'manual' && !overridden;
+      pendingDecisions.push({ kind: 'decision', by: id, index, point, chosen: opt.id, deviates: !opt.honest, ...(manual ? { manual: true } : {}) });
       return opt.id;
     },
     abort: () => { if (aborted === null) aborted = { by: id, cause: 'abort' }; },

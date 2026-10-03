@@ -12,7 +12,7 @@ interface Props {
   highlight?: number | null;
   /** Per-arrangement counts; cells are shaded by share of the total. */
   weights?: readonly number[];
-  caption?: string;
+  caption?: React.ReactNode;
 }
 
 function describe(k: number): string {
@@ -72,7 +72,10 @@ export function ArrangementGrid({ highlight = null, weights, caption }: Props) {
                       className={`agrid__chip agrid__chip--${room}${focus !== null && focus !== p ? ' agrid__chip--dim' : ''}`}
                       style={{ background: ROOM_INFO[room].color }}
                       onMouseEnter={() => setFocus(p)}
-                    />
+                      title={`${PARTY_NAMES[p]}: ${ROOM_INFO[room].label}`}
+                    >
+                      {PARTY_NAMES[p][0]}
+                    </i>
                   );
                 })}
               </div>

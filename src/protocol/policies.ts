@@ -35,11 +35,18 @@ const POLICIES: Record<Role, Policy> = {
     if (pt.kind === 'reconstructShare') return pt.context?.knowsValue && !pt.context?.wouldWin ? 'forge' : 'true';
     return honestOption(pt);
   },
-  // Extended in PR12 (collusion).
-  colluder: honest,
+  manual: honest,
+  colluder: (pt) => {
+    if (pt.kind === 'dealTiming') return Number(pt.context?.accomplices ?? 0) > 0 ? 'wait' : 'now';
+    if (pt.kind === 'leak') return 'forward';
+    if (pt.kind === 'withhold') return pt.context?.plan === 'withhold' ? 'withhold' : 'deal';
+    return honestOption(pt);
+  },
 };
 
 export function policyFor(role: Role): Policy {
+  // The user's roommate: honest by default; the UI supplies the real choice as an override.
+  if (role === 'manual') return honest;
   return POLICIES[role];
 }
 

@@ -4,6 +4,8 @@ import { ROOM_INFO } from './content/rooms';
 import { rolesFor } from './protocol/parties';
 import { DEFAULT_SEED, T_RANGE, rungRoles, rungScenario } from './protocol/scenario';
 import { ThresholdChart } from './ui/ThresholdChart';
+import { Sandbox } from './ui/Sandbox';
+import { RoomName, cap, withRoomNames } from './ui/RoomName';
 import { maxTolerated } from './content/threshold';
 import { DAVE, PARTY_NAMES, type Event, type PartyId, type Role, type Rung } from './protocol/types';
 import { share } from './sim/simulate';
@@ -11,9 +13,11 @@ import { ArrangementGrid } from './ui/ArrangementGrid';
 import { FairnessChart } from './ui/Chart';
 import { Intro } from './ui/Intro';
 import { MathToggle, useMathToggle } from './ui/MathToggle';
+import { mathMode } from './ui/mathMode';
 import { PolynomialVisual } from './ui/PolynomialVisual';
-import { Panels } from './ui/Panels';
+import { Stage } from './ui/Stage';
 import { StepControls } from './ui/StepControls';
+import { useAutoplay } from './ui/useAutoplay';
 import { Timeline, buildRows } from './ui/Timeline';
 import { useRound } from './ui/useRound';
 import { ROUNDS, useSimulation } from './ui/useSimulation';
@@ -50,7 +54,9 @@ export function App() {
   };
 
   const [view, setView] = useState<View>('step');
+  const [sandbox, setSandbox] = useState(false);
   const [showMath, setShowMath] = useMathToggle();
+  mathMode.set(showMath);
   const rung = RUNGS[rungId]!;
   const scenario = useMemo(() => rungScenario(rungId, daveRole, seed, t), [rungId, daveRole, seed, t]);
   const roles = rungRoles(rungId, rolesFor(scenario.protocol, DAVE));
@@ -72,6 +78,14 @@ export function App() {
     return set;
   }, [round.log, round.step]);
   const hasOverrides = Object.keys(round.overrides).length > 0;
+  const autoplay = useAutoplay({
+    step: round.step,
+    last: round.last,
+    next: round.next,
+    // Pause only when a decision is actually waiting for the user ("You play Dave"); a role's own moves play through.
+    holdHere: currentDecision !== undefined && currentDecision.manual === true,
+    resetKey: round.log,
+  });
   const shownArrangement = outcomeStep >= 0 && round.step >= outcomeStep ? (round.result.arrangement ?? null) : null;
 
   // Entering the simulation view with no result yet starts the run (R26).
@@ -80,10 +94,11 @@ export function App() {
   }, [view, tally, running, run]);
 
   const selectRung = (id: Rung) => {
+    setSandbox(false);
     setUrlState((s) => ({ ...s, rung: id, roles: { ...s.roles, [DAVE]: 'honest' } }));
   };
 
-  const best = ROOM_INFO.master.label;
+  const best = <RoomName room="master" />;
   const daveBest = tally && tally.rounds - tally.stuck > 0 ? share(tally, DAVE, 'master') : null;
   const allStuck = tally !== null && tally.rounds > 0 && tally.stuck === tally.rounds;
 
@@ -99,12 +114,12 @@ export function App() {
 
       <Intro />
 
-      <nav className="ladder" aria-label="Attack ladder">
+      <nav className="ladder" aria-label="Levels">
         {RUNGS.map((r) => (
           <button
             key={r.id}
             type="button"
-            className={`rung${r.id === rungId ? ' rung--active' : ''}${r.available ? '' : ' rung--locked'}`}
+            className={`rung${!sandbox && r.id === rungId ? ' rung--active' : ''}${r.available ? '' : ' rung--locked'}`}
             title={r.available ? r.title : `${r.title} (coming soon)`}
             disabled={!r.available}
             aria-current={r.id === rungId ? 'step' : undefined}
@@ -113,12 +128,24 @@ export function App() {
             {r.id}
           </button>
         ))}
+        <button
+          type="button"
+          className={`rung rung--sandbox${sandbox ? ' rung--active' : ''}`}
+          title="Sandbox: try to break it yourself"
+          aria-current={sandbox ? 'step' : undefined}
+          onClick={() => setSandbox(true)}
+        >
+          ⚗
+        </button>
       </nav>
+
+      {sandbox ? <Sandbox /> : <>
 
       <section className="rung-copy">
         <h2>
-          <span className="rung-copy__id">Rung {rung.id}</span> {rung.title}
+          <span className="rung-copy__id">Level {rung.id}</span> {rung.title}
         </h2>
+        <p className="rung-copy__story">{rung.story}</p>
         <dl>
           <dt>Protocol</dt><dd>{rung.protocol}</dd>
           <dt>Attack</dt><dd>{rung.attack}</dd>
@@ -132,7 +159,7 @@ export function App() {
           <span>{PARTY_NAMES[DAVE]}</span>
           <select value={daveRole} onChange={(e) => setDaveRole(e.target.value as Role)}>
             {roles.map((role) => (
-              <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+              <option key={role} value={role}>{role === 'manual' ? `You play ${PARTY_NAMES[DAVE]}` : cap(ROLE_LABELS[role])}</option>
             ))}
           </select>
         </label>
@@ -174,39 +201,44 @@ export function App() {
 
       {view === 'step' ? (
         <section className="view view--step" aria-label="One round, step by step">
-          <div className="workspace">
-            <div className="col col--panels">
-              <h2 className="col__title">What each roommate knows</h2>
-              <StepControls
-                step={round.step}
-                last={round.last}
-                event={round.event}
-                broadcast={broadcast}
-                onPrev={round.prev}
-                onNext={round.next}
-                onNextPhase={round.nextPhase}
-                onReset={round.reset}
-                onEnd={round.end}
-              />
-              {hasOverrides ? (
-                <p className="overrides">
-                  You are playing {PARTY_NAMES[DAVE]}'s moves.{' '}
-                  <button type="button" className="rerun" onClick={round.clearOverrides}>Reset to his usual play</button>
-                </p>
-              ) : null}
-              <Panels
-                views={round.views}
-                roles={scenario.roles}
-                decision={currentDecision}
-                deviated={deviated}
-                onOverride={round.override}
-              />
-            </div>
-            <div className="col col--timeline">
-              <h2 className="col__title">Messages</h2>
-              <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
-            </div>
-          </div>
+          <h2 className="col__title">One round, message by message</h2>
+          <StepControls
+            step={round.step}
+            last={round.last}
+            event={round.event}
+            broadcast={broadcast}
+            onPrev={round.prev}
+            onNext={round.next}
+            onNextPhase={round.nextPhase}
+            onReset={round.reset}
+            onEnd={round.end}
+            autoplay={autoplay}
+          />
+          {hasOverrides ? (
+            <p className="overrides">
+              You are playing {PARTY_NAMES[DAVE]}'s moves.{' '}
+              <button type="button" className="rerun" onClick={round.clearOverrides}>Reset to his usual play</button>
+            </p>
+          ) : null}
+          <Stage
+            events={round.log.events}
+            step={round.step}
+            views={round.views}
+            prevViews={round.prevViews}
+            roles={scenario.roles}
+            decision={currentDecision}
+            deviated={deviated}
+            onOverride={round.override}
+            resultLine={
+              shownArrangement === null
+                ? null
+                : `Arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`
+            }
+          />
+          <details className="history">
+            <summary className="history__summary">Message history</summary>
+            <Timeline events={round.log.events} step={round.step} onSelect={round.setStep} />
+          </details>
           {scenario.protocol.kind === 'shared' ? <PolynomialVisual views={round.views} showMath={showMath} /> : null}
           <h2 className="col__title">The 24 arrangements</h2>
           <ArrangementGrid
@@ -214,12 +246,15 @@ export function App() {
             caption={
               shownArrangement === null
                 ? 'The picks add up to one of these 24 numbers. Step to the end of the round to see which.'
-                : `This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`
+                : withRoomNames(`This round landed on arrangement #${shownArrangement}: ${PARTY_NAMES[DAVE]} gets ${ROOM_INFO[round.result.assignment![DAVE]].label}.`)
             }
           />
         </section>
       ) : (
         <section className="view view--sim" aria-label="Fairness over many rounds">
+          {daveRole === 'manual' ? (
+            <p className="sandbox__lead">You play {PARTY_NAMES[DAVE]} one round at a time. Over 1,000 rounds he plays honestly.</p>
+          ) : null}
           <p className="headline" aria-live="polite">
             {allStuck ? (
               <>Every round got stuck: with t = {t ?? 2}, one missing roommate leaves too few shares to rebuild anyone. Nobody gets a room.</>
@@ -259,6 +294,7 @@ export function App() {
           </div>
         </section>
       )}
+      </>}
     </main>
   );
 }
