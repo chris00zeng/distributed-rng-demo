@@ -47,14 +47,14 @@ export function FairnessChart({ tally, total }: { tally: Tally | null; total: nu
           );
         })}
         <line x1={PAD_L} x2={W - PAD_R} y1={y(fair)} y2={y(fair)} className="chart__fair" />
-        <text x={W - PAD_R} y={y(fair) - 5} textAnchor="end" className="chart__fair-label">fair: 1 in 4</text>
+        <text x={W - PAD_R} y={y(fair) - 5} textAnchor="end" className="chart__fair-label">Fair: 1 in 4</text>
       </svg>
       <figcaption className="chart__legend">
         {ROOMS.map((room) => (
           <span key={room} className="legend__item"><i className="legend__swatch" style={{ background: ROOM_INFO[room].color }} />{ROOM_LABELS[room]}</span>
         ))}
         <span className="legend__status">
-          {tally ? `${done.toLocaleString()} of ${total.toLocaleString()} rounds${tally.stuck ? `, ${tally.stuck} stuck` : ''}` : 'not run yet'}
+          {tally ? `${done.toLocaleString()} of ${total.toLocaleString()} rounds${tally.stuck ? `, ${tally.stuck} stuck` : ''}` : 'Not run yet'}
         </span>
       </figcaption>
     </figure>
