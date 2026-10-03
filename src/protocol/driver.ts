@@ -17,7 +17,7 @@ import {
 } from './types';
 
 export const MAX_ATTEMPTS = 64;
-const PHASE_ORDER: Phase[] = ['announce', 'commit', 'deal', 'reveal', 'reconstruct', 'done'];
+const PHASE_ORDER: Phase[] = ['announce', 'commit', 'deal', 'complain', 'reveal', 'reconstruct', 'done'];
 
 export interface RunOptions {
   /** Snapshot every party's view after every event (needed by the UI, costly in bulk). */
@@ -156,9 +156,14 @@ function runAttempt(
     }
     const done = consensus(parties, bus);
     if (done) return finish(done);
-    // Idle: give parties a chance to act on "waited long enough", in bus order.
+    // Idle: give parties a chance to act on "waited long enough". The party in the
+    // earliest phase goes first (ties in bus order), so a laggard catches up before
+    // the others conclude it has gone silent.
     let acted = false;
-    for (const id of bus.order()) {
+    const byPhase = [...bus.order()].sort(
+      (a, b) => PHASE_ORDER.indexOf(parties[a]!.phase()) - PHASE_ORDER.indexOf(parties[b]!.phase()),
+    );
+    for (const id of byPhase) {
       const p = parties[id]!;
       if (!bus.isDropped(id) && p.onIdle?.(ctxs[id]!)) { acted = true; break; }
     }

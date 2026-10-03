@@ -7,7 +7,7 @@ export abstract class BaseParty implements Party {
   protected state: PartyView;
 
   constructor(readonly id: PartyId, phase: Phase) {
-    this.state = { phase, announced: {}, commitments: {}, revealed: {}, invalid: [], sharesHeld: [], reconstructed: {}, excluded: [] };
+    this.state = { phase, announced: {}, commitments: {}, revealed: {}, invalid: [], sharesHeld: [], reconstructed: {}, excluded: [], complaints: [], disqualified: [], rejected: [] };
   }
 
   abstract onStart(ctx: Ctx): void;

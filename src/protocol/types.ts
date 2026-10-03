@@ -31,12 +31,20 @@ export interface Scenario {
 
 export type Msg =
   | { kind: 'announce'; value: Scalar }
-  | { kind: 'commit'; commitment: Uint8Array }
+  /** `commitment` is the wire form (hash, or t × 32-byte curve points). `points` is the
+   *  decoded Feldman commitment carried alongside so recipients need not decompress. */
+  | { kind: 'commit'; commitment: Uint8Array; points?: unknown[] }
   | { kind: 'reveal'; value: Scalar; nonce: Uint8Array }
   /** Private: dealer's share of its own value for the recipient (x = recipient id + 1). */
   | { kind: 'share'; dealer: PartyId; x: number; y: Scalar }
   /** Broadcast during reconstruction of a silent dealer's value. */
-  | { kind: 'reconstructShare'; dealer: PartyId; x: number; y: Scalar };
+  | { kind: 'reconstructShare'; dealer: PartyId; x: number; y: Scalar }
+  /** Rung 5+: my share from `dealer` failed verification. */
+  | { kind: 'complaint'; dealer: PartyId }
+  /** Rung 5+: I have checked every share I hold; here is who I complained about. */
+  | { kind: 'checked'; complaints: PartyId[] }
+  /** Rung 5+: a dealer answers a complaint by publishing that recipient's share. */
+  | { kind: 'publishShare'; x: number; y: Scalar };
 
 export interface Envelope {
   /** One seq per logical send; a broadcast fans out into envelopes sharing it. */
@@ -46,7 +54,7 @@ export interface Envelope {
   msg: Msg;
 }
 
-export type Phase = 'announce' | 'commit' | 'deal' | 'reveal' | 'reconstruct' | 'done';
+export type Phase = 'announce' | 'commit' | 'deal' | 'complain' | 'reveal' | 'reconstruct' | 'done';
 
 export interface HeldShare {
   dealer: PartyId;
@@ -70,6 +78,14 @@ export interface PartyView {
   reconstructed: Partial<Record<PartyId, Scalar>>;
   /** Parties left out of the round because they went silent before dealing. */
   excluded: PartyId[];
+  /** Rung 5+: dealers whose share to me failed verification (complaints I know of). */
+  complaints: PartyId[];
+  /** Rung 5+: dealers thrown out for not answering a complaint. */
+  disqualified: PartyId[];
+  /** Rung 5+: parties whose reconstruction share was rejected by verification. */
+  rejected: PartyId[];
+  /** Rung 5+: my value is a padded pick (D23). */
+  padded?: boolean;
   /** Integer total of the contributions this party combined. */
   combined?: Scalar;
   /** The arrangement number: combined mod 24. */

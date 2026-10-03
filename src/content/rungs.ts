@@ -75,6 +75,15 @@ export const RUNGS: readonly RungCopy[] = [
     attackRole: 'badDealer',
     available: true,
   },
-  { id: 5, title: 'Verifiable secret sharing', protocol: '', attack: '', outcome: '', lesson: '', attackRole: 'badDealer', available: false },
+  {
+    id: 5,
+    title: 'Verifiable secret sharing',
+    protocol: 'Each roommate pads their pick with random digits, then publishes commitments to the whole line their shares lie on. Everyone checks the share they received against those commitments before anyone reveals. A share that fails gets a complaint; the dealer must publish that share or is thrown out, which costs nothing because nothing has been revealed yet.',
+    attack: 'Same as rung 4: shares that do not add up, or a forged share when Ana\'s phone dies.',
+    outcome: 'Fixed. The bad shares are caught, with a name attached, before any reveal. A forged share is simply rejected. Everyone back at 25%.',
+    lesson: 'Make cheating detectable, and attributable, before it can pay off. Then nobody ever needs to restart.',
+    attackRole: 'badDealer',
+    available: true,
+  },
   { id: 6, title: 'The threshold limit', protocol: '', attack: '', outcome: '', lesson: '', attackRole: 'colluder', available: false },
 ];

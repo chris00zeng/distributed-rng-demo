@@ -37,7 +37,7 @@ export function panelFacts(view: PartyView, me: PartyId): Fact[] {
   const facts: Fact[] = [];
 
   if (isScalar(v.myValue)) facts.push({ label: 'My number', value: shortScalar(v.myValue), kind: 'secret' });
-  if (isBytes(v.myNonce)) facts.push({ label: 'My nonce', value: shortBytes(v.myNonce), kind: 'secret' });
+  if (isBytes(v.myNonce) && v.myNonce.length > 0) facts.push({ label: 'My nonce', value: shortBytes(v.myNonce), kind: 'secret' });
 
   const commits = perParty(v.commitments, me, (c) => (isBytes(c) ? shortBytes(c) : Array.isArray(c) ? `${c.length} points` : null));
   if (commits.length) facts.push({ label: 'Commitments seen', value: commits.join(' · '), kind: 'public' });
@@ -56,7 +56,7 @@ export function panelFacts(view: PartyView, me: PartyId): Fact[] {
   }
   const reconstructed = perParty(v.reconstructed, me, (s) => (isScalar(s) ? shortScalar(s) : null));
   if (reconstructed.length) facts.push({ label: 'Reconstructed', value: reconstructed.join(' · '), kind: 'public' });
-  for (const key of ['complaints', 'disqualified', 'excluded'] as const) {
+  for (const key of ['complaints', 'disqualified', 'rejected', 'excluded'] as const) {
     const arr = v[key];
     if (Array.isArray(arr) && arr.length) {
       facts.push({ label: key[0]!.toUpperCase() + key.slice(1), value: (arr as PartyId[]).map(name).join(', '), kind: 'alert' });

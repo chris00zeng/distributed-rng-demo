@@ -60,10 +60,13 @@ export function phaseLabel(phase: Phase | string): string {
 export function msgLabel(msg: Msg): string {
   switch (msg.kind) {
     case 'announce': return `announces ${shortScalar(msg.value)}`;
-    case 'commit': return 'commits (hash)';
+    case 'commit': return msg.commitment.length > 32 ? 'commits (curve points)' : 'commits (hash)';
     case 'reveal': return `reveals ${shortScalar(msg.value)}`;
     case 'share': return 'share';
     case 'reconstructShare': return `share of ${name(msg.dealer)}'s number`;
+    case 'complaint': return `complaint: ${name(msg.dealer)}'s share fails the check`;
+    case 'checked': return msg.complaints.length ? 'checked shares: complaints' : 'checked shares: all good';
+    case 'publishShare': return 'publishes the disputed share';
     default: {
       const m = msg as { kind: string };
       return m.kind;

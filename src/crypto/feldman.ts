@@ -11,7 +11,7 @@
  * pick first (see padding.ts, D23). Pure functions; no state.
  */
 import { ristretto255 } from '@noble/curves/ed25519.js';
-import { L, type Scalar } from './field';
+import { L, add, type Scalar } from './field';
 
 const Point = ristretto255.Point;
 export type Point = typeof ristretto255.Point.BASE;
@@ -56,6 +56,24 @@ export function verifyShare(commitment: Commitment, x: number, y: Scalar): boole
     xPow *= bx;
   }
   return mulBase(y).equals(rhs);
+}
+
+/**
+ * Aggregate reveal check: Σ value_i · G == Σ C_0,i. One base-point multiplication
+ * for all dealers instead of one each. Sound against a single lying dealer (the
+ * others' values are fixed, so his must be right); two colluders whose lies
+ * cancel leave the total, and therefore the outcome, unchanged. Callers fall back
+ * to `commitmentOpens` per dealer when this fails, to find who lied.
+ */
+export function totalOpens(items: ReadonlyArray<{ commitment: Commitment; value: Scalar }>): boolean {
+  if (items.length === 0) return true;
+  let total: Scalar = 0n;
+  let rhs: Point = ZERO;
+  for (const { commitment, value } of items) {
+    total = add(total, value);
+    rhs = rhs.add(commitment[0]!);
+  }
+  return mulBase(total).equals(rhs);
 }
 
 /** Reveal check: does `value` open the commitment, i.e. value·G == C_0? */

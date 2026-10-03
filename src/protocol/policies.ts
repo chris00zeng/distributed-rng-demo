@@ -24,6 +24,7 @@ const POLICIES: Record<Role, Policy> = {
   },
   badDealer: (pt) => {
     if (pt.kind === 'deal') return 'inconsistent';
+    if (pt.kind === 'answerComplaint') return 'ignore';
     if (pt.kind === 'revealTiming') return 'wait';
     if (pt.kind === 'reveal') return pt.context?.wouldWin ? 'reveal' : 'quit';
     return honestOption(pt);
