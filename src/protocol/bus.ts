@@ -1,14 +1,21 @@
 /**
- * Simulated message bus (Technical Plan D9). Delivery order is deterministic
- * for a seed: envelopes are ordered by (per-round rank of the sender, seq).
- * A dropped party's outbound messages are discarded.
+ * Simulated message bus (Technical Plan D9). Delivery is breadth-first and
+ * deterministic for a seed: every message already in flight is delivered
+ * before any message sent in response to one of them. Each envelope carries a
+ * generation (messages sent while handling a generation-g delivery are
+ * generation g+1); within a generation, envelopes are ordered by (per-round
+ * rank of the sender, seq). A dropped party's outbound messages are discarded.
  */
 import { shuffle, type Prng } from '../crypto/prng';
 import { PARTY_IDS, type Envelope, type Msg, type PartyId } from './types';
 
+interface Queued { env: Envelope; gen: number }
+
 export class Bus {
-  private queue: Envelope[] = [];
+  private queue: Queued[] = [];
   private seq = 0;
+  /** Generation stamped on the next send: one past the last delivered envelope's. */
+  private gen = 0;
   private dropped = new Set<PartyId>();
   private rank: Record<PartyId, number>;
 
@@ -22,17 +29,26 @@ export class Bus {
     if (this.dropped.has(from)) return;
     const seq = this.seq++;
     const targets = to === 'all' ? PARTY_IDS.filter((p) => p !== from) : [to];
-    for (const t of targets) this.queue.push({ seq, from, to: t, msg });
+    for (const t of targets) this.queue.push({ env: { seq, from, to: t, msg }, gen: this.gen });
   }
 
   deliverNext(): Envelope | null {
     if (this.queue.length === 0) return null;
     let best = 0;
     for (let i = 1; i < this.queue.length; i++) {
-      const a = this.queue[i]!, b = this.queue[best]!;
-      if (this.rank[a.from] < this.rank[b.from] || (a.from === b.from && a.seq < b.seq)) best = i;
+      if (this.before(this.queue[i]!, this.queue[best]!)) best = i;
     }
-    return this.queue.splice(best, 1)[0]!;
+    const picked = this.queue.splice(best, 1)[0]!;
+    this.gen = picked.gen + 1;
+    return picked.env;
+  }
+
+  /** Generation first, then the sender's seeded rank, then seq. */
+  private before(a: Queued, b: Queued): boolean {
+    if (a.gen !== b.gen) return a.gen < b.gen;
+    const ra = this.rank[a.env.from], rb = this.rank[b.env.from];
+    if (ra !== rb) return ra < rb;
+    return a.env.seq < b.env.seq;
   }
 
   pending(): number {
