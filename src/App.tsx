@@ -82,7 +82,8 @@ export function App() {
     step: round.step,
     last: round.last,
     next: round.next,
-    holdHere: currentDecision !== undefined && currentDecision.by === DAVE,
+    // Pause only when a decision is actually waiting for the user ("You play Dave"); a role's own moves play through.
+    holdHere: currentDecision !== undefined && currentDecision.manual === true,
     resetKey: round.log,
   });
   const shownArrangement = outcomeStep >= 0 && round.step >= outcomeStep ? (round.result.arrangement ?? null) : null;
